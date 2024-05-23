@@ -9,8 +9,17 @@ class XDeliveryNote(DeliveryNote):
     
     def on_submit(self):
         super(XDeliveryNote, self).on_submit()
-        self.make_stock_ledger_entry_target_warehouse()
+        self.if_custom_add_to_transit()
+ 
+    def if_custom_add_to_transit(self):
+        
+        if(self.custom_add_to_transit):
+            self.update_status()
+            self.make_stock_ledger_entry_target_warehouse()
 
+    def update_status(self):
+        frappe.db.set_value("Delivery Note", self.name, "status", "To Receive")
+    
     def make_stock_ledger_entry_target_warehouse(self):
         sl_entries = []
         entry = frappe._dict({
@@ -32,23 +41,42 @@ class XDeliveryNote(DeliveryNote):
         sl_entries.append(entry)
         make_sl_entries(sl_entries)
     
+    def on_trash(self):
+        self.cancel_linked_records()
+
     def on_cancel(self):
         super(XDeliveryNote, self).on_cancel()
         self.cancel_linked_records()
 
     def cancel_linked_records(self):
-        name = frappe.db.get_value("Stock Entry", {"custom_delivery_note": self.name}, "name")
-        if(name):
-            frappe.db.sql(f""" 
-            delete from `tabStock Ledger Entry` where voucher_no = '{name}'
-        """)
-            frappe.db.sql(f""" 
-            delete from `tabStock Entry` where name = '{name}'
-        """)
-        
+        self.delete_stock_entry_and_ledger()
+        self.delete_stock_ledger_and_gl_entry()
+        self.reset_material_request()
+    
+    def delete_stock_entry_and_ledger(self):
+        stock = frappe.db.get_list("Stock Entry", filters={"custom_delivery_note": self.name}, fields=["name"])
+        if(stock):
+            for d in stock:
+                frappe.db.sql(f""" 
+                delete from `tabStock Ledger Entry` where voucher_no = '{d.name}'
+            """)
+                frappe.db.sql(f""" 
+                delete from `tabStock Entry` where name = '{d.name}'
+            """)
+    
+    def delete_stock_ledger_and_gl_entry(self):
         frappe.db.sql(f""" 
             delete from `tabStock Ledger Entry` where voucher_no = '{self.name}'
         """)
         frappe.db.sql(f""" 
             delete from `tabGL Entry` where voucher_no = '{self.name}'
         """)
+
+    def reset_material_request(self):
+        if(not self.custom_reference_name): return
+        frappe.db.sql(f""" 
+                update `tab{self.custom_reference_doctype}`
+                set status = "Pending", per_ordered=0
+                where name = '{self.custom_reference_name}'
+            """)
+

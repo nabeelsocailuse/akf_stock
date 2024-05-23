@@ -15,7 +15,7 @@ def _make_stock_entry_(source_name, stock_entry_type, target_doc=None):
         target.make_serial_and_batch_bundle_for_transfer()
         
         target.custom_delivery_note = source_name
-        target.add_to_transit = 1
+        target.custom_dn_receiving = 1
         
         if(stock_entry_type == "Material Transfer"):
             target.from_warehouse = source.custom_set_in_transit_warehouse
@@ -37,9 +37,9 @@ def _make_stock_entry_(source_name, stock_entry_type, target_doc=None):
             target_doc.s_warehouse = source_parent.custom_set_in_transit_warehouse
             target_doc.t_warehouse = source_parent.set_target_warehouse
         else:
-            target_doc.s_warehouse = source_parent.set_target_warehouse
+            target_doc.s_warehouse = source_parent.custom_set_in_transit_warehouse
         # target_doc.qty = source_doc.qty - source_doc.transferred_qty
-        target_doc.qty = source_doc.qty 
+        target_doc.qty = source_doc.qty
 
     doclist = get_mapped_doc(
         "Delivery Note",
