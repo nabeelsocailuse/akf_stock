@@ -28,7 +28,10 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Material Request" : "public/js/customization/extends/material_request_to_delivery_note.js",
+    "Delivery Note" : "public/js/customization/extends/custom_delivery_note.js"
+    }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -114,9 +117,10 @@ app_license = "mit"
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Delivery Note": "akf_stock.customization.extends.custom_delivery_note.XDeliveryNote",
+    "Stock Entry": "akf_stock.customization.extends.custom_stock_entry.XStockEntry",
+}
 
 # Document Events
 # ---------------
