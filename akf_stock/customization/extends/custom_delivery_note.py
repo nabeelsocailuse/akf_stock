@@ -19,6 +19,7 @@ class XDeliveryNote(DeliveryNote):
 
     def update_status(self):
         frappe.db.set_value("Delivery Note", self.name, "status", "To Receive")
+        frappe.db.set_value(self.custom_reference_doctype, self.custom_reference_name, "transfer_status", "In Transit")
     
     def make_stock_ledger_entry_target_warehouse(self):
         sl_entries = []

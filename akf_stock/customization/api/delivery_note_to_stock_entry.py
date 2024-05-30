@@ -39,7 +39,7 @@ def _make_stock_entry_(source_name, stock_entry_type, target_doc=None):
         else:
             target_doc.s_warehouse = source_parent.custom_set_in_transit_warehouse
         # target_doc.qty = source_doc.qty - source_doc.transferred_qty
-        target_doc.qty = source_doc.qty
+        target_doc.qty = source_doc.qty - get_receive_qty(source_name, source_parent.custom_set_in_transit_warehouse, source_doc)
 
     doclist = get_mapped_doc(
         "Delivery Note",
@@ -69,3 +69,19 @@ def _make_stock_entry_(source_name, stock_entry_type, target_doc=None):
     return doclist
 
 
+
+def get_receive_qty(source_name, in_transit_warehouse, row):
+        qty = frappe.db.sql(f""" 
+            select ifnull(sum(actual_qty),0) as qty
+            from `tabStock Ledger Entry` 
+            where 
+                docstatus=1
+                and warehouse = "{in_transit_warehouse}"
+                and voucher_no in (select name
+                    from `tabStock Entry` 
+                    where docstatus=1 and custom_delivery_note ="{source_name}")
+        """)
+        if(qty):
+            _qty_ =  qty[0][0]
+            return -1*_qty_ if(_qty_<0) else _qty_
+        return 0

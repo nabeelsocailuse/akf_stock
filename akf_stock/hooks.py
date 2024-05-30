@@ -122,6 +122,7 @@ doctype_list_js = {
 override_doctype_class = {
 	"Delivery Note": "akf_stock.customization.extends.custom_delivery_note.XDeliveryNote",
     "Stock Entry": "akf_stock.customization.extends.custom_stock_entry.XStockEntry",
+    "Material Request": "akf_stock.customization.extends.custom_material_request.XMaterialRequest"
 }
 
 # Document Events

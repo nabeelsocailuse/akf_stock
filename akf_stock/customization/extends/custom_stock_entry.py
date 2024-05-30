@@ -2,9 +2,12 @@ import frappe
 from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
 
 class XStockEntry(StockEntry):
+
+                       
     def on_submit(self):
         super(XStockEntry, self).on_submit()
         self.calculate_per_installed_for_delivery_note()
+        self.set_material_request_status_per_outgoing_stock_entry()
 
     def calculate_per_installed_for_delivery_note(self):
         if(not self.custom_delivery_note): return
@@ -68,17 +71,75 @@ class XStockEntry(StockEntry):
         """, as_dict=0)
         
         if(total_percent):
-            if(total_percent[0][0]==100):
-                frappe.db.set_value("Delivery Note", self.custom_delivery_note, "status", "Completed")
-                custom_reference_name = frappe.db.get_value("Delivery Note", self.custom_delivery_note, "custom_reference_name")
-                frappe.db.set_value("Material Request", custom_reference_name, "status", "Completed")
-            else:
-                frappe.db.set_value("Delivery Note", self.custom_delivery_note, "status", "To Receive")
-                custom_reference_name = frappe.db.get_value("Delivery Note", self.custom_delivery_note, "custom_reference_name")
-                frappe.db.set_value("Material Request", custom_reference_name, "status", "Transferred")
+            percent = total_percent[0][0]
+            
+            d_status = "To Receive"
+            transfer_status = "In Transit"
+            m_status = "Partially Received"
+            
+            if(percent==100):
+                d_status = "Completed"
+                transfer_status = "Completed"
+                m_status = "Received"
+               
+            # Delivery Note
+            frappe.db.sql(f""" 
+                    update `tabDelivery Note`
+                    set status="{d_status}"
+                    where docstatus =1 
+                        and name ="{self.custom_delivery_note}"
+                """)
+            
+            # Material Request
+            frappe.db.sql(f""" 
+                    update `tabMaterial Request`
+                    set transfer_status ="{transfer_status}" ,status="{m_status}", per_ordered =  {percent}
+                    where name in (select custom_reference_name from `tabDelivery Note` where name="{self.custom_delivery_note}")
+                """)
+            
+    def set_material_request_status_per_outgoing_stock_entry(self):
+        if (not self.outgoing_stock_entry): return
+        actual_qty = 0.0
+        received_qty = 0.0
+        for row in self.items:
+            _actual_qty = frappe.db.sql(f""" Select sum(actual_qty) as qty
+                        From `tabStock Ledger Entry`
+                        Where docstatus=1
+                        and item_code = '{row.item_code}'
+                        and warehouse = '{row.s_warehouse}' 
+                        and voucher_no = '{self.outgoing_stock_entry}' """)
+            
+            if(_actual_qty): actual_qty += _actual_qty[0][0]
+            
+            _received_qty = frappe.db.sql(f""" 
+                    select ifnull(sum(actual_qty),0) as qty
+                    from `tabStock Ledger Entry` 
+                    where 
+                        docstatus=1
+                        and item_code = "{row.item_code}"
+                        and warehouse = "{row.s_warehouse}" 
+                        and voucher_no in (select name as qty
+                            from `tabStock Entry` 
+                            where docstatus=1 and outgoing_stock_entry ="{self.outgoing_stock_entry}")
+                """)
+                
+            if(_received_qty): 
+                _received_qty = _received_qty[0][0]
+                received_qty += (-1*_received_qty) if(_received_qty<0) else _received_qty
 
+        if(actual_qty>0):        
+            per_ordered = (received_qty/actual_qty) * 100.0
+            status = "Completed" if(per_ordered==100) else "In Transit"
+            frappe.db.sql(f""" 
+                        Update `tabMaterial Request`
+                        set transfer_status = "{status}",status = "{status}", per_ordered = {per_ordered}
+                        Where name in (Select material_request 
+                        From `tabStock Entry Detail` 
+                        Where docstatus=1 and parent="{self.outgoing_stock_entry}" )""")
+    
     def on_trash(self):
-        pass
+        self.cancel_linked_records()
+        self.reset_delivery_note_percent()
 
     def on_cancel(self):
         super(XStockEntry, self).on_cancel()

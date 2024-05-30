@@ -12,13 +12,21 @@ frappe.ui.form.on("Delivery Note", {
         }
     },
     add_custom_buttons: function(frm){
-        if(frm.doc.docstatus==1 && frm.doc.per_installed<100){
+        if(frm.doc.docstatus==1 && frm.doc.status!="Completed"){
             frm.add_custom_button(__('Lost / Wastage'), function() {
                 frm.events.make_stock_entry(frm, "Lost / Wastage");
             });
             frm.add_custom_button(__('End Transit'), function() {
                 frm.events.make_stock_entry(frm, "Material Transfer");
             });
+        }
+        if(frm.doc.docstatus==1){
+            frm.add_custom_button(__("View Stock Entry"), function() {
+                frappe.route_options = {
+                    "custom_delivery_note": frm.doc.name
+                };
+                frappe.set_route("List", "Stock Entry")
+            }, __("View"));
         }
     },
     make_stock_entry: function(frm, stock_entry_type){
