@@ -12,7 +12,7 @@ class XStockReconciliation(StockReconciliation):
                 if(frappe.db.exists("Stock Ledger Entry", 
                     {"docstatus": 1, "item_code": row.item_code, "warehouse": row.warehouse, "voucher_no": self.name})
                     ):
-                    frappe.db.sql(f""" 
+                    frappe.db.sql(f"""
                             update `tabStock Ledger Entry`
                             set custom_new = {row.custom_new}, custom_used = {row.custom_used}
                             where docstatus=1 
