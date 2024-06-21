@@ -149,6 +149,7 @@ class XStockEntry(StockEntry):
                             update `tabStock Ledger Entry`
                             set custom_new = {row.custom_new}, custom_used = {row.custom_used}
                             where docstatus=1 
+                                and voucher_detail_no = '{row.name}'
                                 and item_code = '{row.item_code}'
                                 and warehouse = '{row.t_warehouse}'
                         """)

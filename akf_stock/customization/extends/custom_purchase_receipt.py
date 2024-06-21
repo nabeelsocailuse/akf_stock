@@ -7,6 +7,7 @@ class XPurchaseReceipt(PurchaseReceipt):
         self.update_stock_ledger_entry()
 
     def update_stock_ledger_entry(self):
+        msg = ""
         for row in self.items:
             if(hasattr(row, "custom_new") and hasattr(row, "custom_used")):
                 if(frappe.db.exists("Stock Ledger Entry", 
@@ -16,6 +17,8 @@ class XPurchaseReceipt(PurchaseReceipt):
                             update `tabStock Ledger Entry`
                             set custom_new = {row.custom_new}, custom_used = {row.custom_used}
                             where docstatus=1 
+                                and voucher_detail_no = '{row.name}'
                                 and item_code = '{row.item_code}'
                                 and warehouse = '{row.warehouse}'
                         """)
+        
