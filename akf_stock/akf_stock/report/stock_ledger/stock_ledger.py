@@ -202,6 +202,12 @@ def get_columns(filters):
 			"width": 100
 		},
 		{
+            "label": _("Donor List"),
+            "fieldname": "custom_donor_list",
+            "fieldtype": "Small Text",
+            "width": 225,
+        },
+		{
 			"label": _("Stock UOM"),
 			"fieldname": "stock_uom",
 			"fieldtype": "Link",
@@ -388,7 +394,8 @@ def get_stock_ledger_entries(filters, items):
 			sle.serial_no,
 			sle.project,
 			sle.custom_new,
-			sle.custom_used
+			sle.custom_used,
+			sle.custom_donor_list
 		)
 		.where(
 			(sle.docstatus < 2)

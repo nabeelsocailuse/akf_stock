@@ -26,13 +26,14 @@ app_license = "mit"
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
-
 # include js in doctype views
+
+
 doctype_js = {
     "Material Request" : "public/js/customization/extends/material_request_to_delivery_note.js",
     "Delivery Note" : "public/js/customization/extends/custom_delivery_note.js",
     "Stock Entry" : "public/js/customization/extends/custom_stock_entry.js",
-    "Purchase Receipt" : "public/js/customization/extends/custom_purchase_receipt.js",
+    # "Purchase Receipt" : "public/js/customization/extends/custom_purchase_receipt.js",
     "Stock Reconciliation" : "public/js/customization/extends/custom_stock_reconciliation.js",
     
     }
@@ -122,13 +123,19 @@ doctype_list_js = {
 # DocType Class
 # ---------------
 # Override standard doctype classes
+# /home/frappe/frappe-bench/apps/akf_accounts/akf_accounts/customizations/extends/project_override.py
+
+# /home/frappe/frappe-bench/apps/akf_stock/akf_stock/customization/extends/custom_purchase_receipt.py
+
+# /home/frappe/frappe-bench/apps/akf_stock/akf_stock/customization/extends/custom_purchase_receipt.py
 
 override_doctype_class = {
 	"Delivery Note": "akf_stock.customization.extends.custom_delivery_note.XDeliveryNote",
     "Stock Entry": "akf_stock.customization.extends.custom_stock_entry.XStockEntry",
     "Material Request": "akf_stock.customization.extends.custom_material_request.XMaterialRequest",
-    "Purchase Receipt": "akf_stock.customization.extends.custom_purchase_receipt.XPurchaseReceipt",
-    "Stock Reconciliation": "akf_stock.customization.extends.custom_stock_reconciliation.XStockReconciliation",
+    "Purchase Receipt" : "akf_stock.customization.extends.custom_purchase_receipt.XPurchaseReceipt",
+    "Stock Reconciliation": "akf_stock.customization.extends.custom_stock_reconciliation.XStockReconciliation"
+    
 }
 
 # Document Events
