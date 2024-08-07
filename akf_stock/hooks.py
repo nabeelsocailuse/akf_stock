@@ -247,3 +247,8 @@ override_doctype_class = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+accounting_dimension_doctypes = [
+	"Payment Detail",
+	"Deduction Breakeven",
+    "Stock Ledger Entry"
+]
