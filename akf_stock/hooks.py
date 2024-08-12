@@ -133,7 +133,7 @@ override_doctype_class = {
 	"Delivery Note": "akf_stock.customization.extends.custom_delivery_note.XDeliveryNote",
     "Stock Entry": "akf_stock.customization.extends.custom_stock_entry.XStockEntry",
     "Material Request": "akf_stock.customization.extends.custom_material_request.XMaterialRequest",
-    "Purchase Receipt" : "akf_stock.customization.extends.custom_purchase_receipt.XPurchaseReceipt",
+    # "Purchase Receipt" : "akf_stock.customization.extends.custom_purchase_receipt.XPurchaseReceipt",
     "Stock Reconciliation": "akf_stock.customization.extends.custom_stock_reconciliation.XStockReconciliation"
     
 }

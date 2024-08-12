@@ -208,6 +208,41 @@ def get_columns(filters):
             "width": 225,
         },
 		{
+            "label": _("Service Area"),
+            "fieldname": "program",
+            "fieldtype": "Link",
+            "options": "Program",
+            "width": 225,
+        },
+        {
+            "label": _("Subservice Area"),
+            "fieldname": "subservice_area",
+            "fieldtype": "Link",
+            "options": "Subservice Area",
+            "width": 225,
+        },
+        {
+            "label": _("Product"),
+            "fieldname": "product",
+            "fieldtype": "Link",
+            "options": "Product",
+            "width": 225,
+        },
+		{
+            "label": _("Inventory Flag"),
+            "fieldname": "inventory_flag",
+            "fieldtype": "Link",
+            "options": "Inventory Flag",
+            "width": 225,
+        },
+		{
+            "label": _("Inventory Scenario"),
+            "fieldname": "inventory_scenario",
+            "fieldtype": "Link",
+            "options": "Inventory Scenario",
+            "width": 225,
+        },
+		{
 			"label": _("Stock UOM"),
 			"fieldname": "stock_uom",
 			"fieldtype": "Link",
@@ -395,7 +430,12 @@ def get_stock_ledger_entries(filters, items):
 			sle.project,
 			sle.custom_new,
 			sle.custom_used,
-			sle.custom_donor_list
+			sle.custom_donor_list,
+			sle.program,
+            sle.subservice_area,
+            sle.product,
+			sle.inventory_flag,
+			sle.inventory_scenario,
 		)
 		.where(
 			(sle.docstatus < 2)

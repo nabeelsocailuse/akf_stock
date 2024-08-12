@@ -16,12 +16,12 @@ class XPurchaseReceipt(PurchaseReceipt):
         self.delete_all_gl_entries()
     
     def delete_all_gl_entries(self):
-        frappe.db.sql("DELETE FROM `tabGL Entry` WHERE purchase_receipt = %s", self.name)
+        frappe.db.sql("DELETE FROM `tabGL Entry` WHERE voucher_no = %s", self.name)
     
     def create_asset_inven_purchase_gl_entries(self):
         if self.custom_type_of_transaction == "Asset Purchase":
             self.create_gl_entries_for_asset_purchase()
-        elif self.custom_type_of_transaction == "Inventory Purchase":
+        elif self.custom_type_of_transaction == "Inventory Purchase Restricted":
             self.create_donor_gl_entries_from_purchase_receipt()
     def create_gl_entries_for_asset_purchase(self):
         company = frappe.get_doc("Company", self.company)
@@ -175,190 +175,13 @@ class XPurchaseReceipt(PurchaseReceipt):
                 gl_entry_inventory_fund.insert(ignore_permissions=True)
                 gl_entry_inventory_fund.submit()
 
-            frappe.msgprint("GL Entries created successfully for equal donated and total amounts.")
+            frappe.msgprint("GL Entries created successfully")
             return
 
         if remaining_amount > 0:
-            if len(donor_list) == 1:
-                donor_entry = donor_list[0]
-                donor = donor_entry.get('donor')
-                cost_center = donor_entry.get('cost_center')
-                project = donor_entry.get('project')
-                program = donor_entry.get('program')
-                subservice_area = donor_entry.get('subservice_area')
-                product = donor_entry.get('product')
-                amount = donor_entry.get('amount', 0.0)
+           frappe.throw("Insufficient Balance: The donated amount is less than the required amount.")
 
-                amount += remaining_amount
-                frappe.msgprint(f"Donor {donor} is debited by an additional {remaining_amount} PKR.")
-
-                gl_entry = frappe.get_doc({
-                    'doctype': 'GL Entry',
-                    'posting_date': self.posting_date,
-                    'transaction_date': self.posting_date,
-                    'account': "Capital Stock - AKFP",
-                    'against_voucher_type': 'Purchase Receipt',
-                    'against_voucher': self.name,
-                    'cost_center': cost_center,
-                    'debit': amount,
-                    'credit': 0.0,
-                    'account_currency': 'PKR',
-                    'debit_in_account_currency': amount,
-                    'credit_in_account_currency': 0.0,
-                    'against': "Capital Stock - AKFP",
-                    'voucher_type': 'Purchase Receipt',
-                    'voucher_no': self.name,
-                    'remarks': 'Donation for item',
-                    'is_opening': 'No',
-                    'is_advance': 'No',
-                    'fiscal_year': '2024-2025',
-                    'company': self.company,
-                    'transaction_currency': 'PKR',
-                    'debit_in_transaction_currency': amount,
-                    'credit_in_transaction_currency': 0.0,
-                    'transaction_exchange_rate': 1,
-                    'project': project,
-                    'program': program,
-                    'party_type': 'Donor',
-                    'party': donor,
-                    'subservice_area': subservice_area,
-                    'donor': donor,
-                    'inventory_flag': 'Purchased',
-                    'product': product
-                })
-
-                gl_entry.insert(ignore_permissions=True)
-                gl_entry.submit()
-
-                gl_entry_inventory_fund = frappe.get_doc({
-                    'doctype': 'GL Entry',
-                    'posting_date': self.posting_date,
-                    'transaction_date': self.posting_date,
-                    'account': inventory_account,  
-                    'against_voucher_type': 'Purchase Receipt',
-                    'against_voucher': self.name,
-                    'cost_center': cost_center,
-                    'debit': 0.0,
-                    'credit': amount,
-                    'account_currency': 'PKR',
-                    'debit_in_account_currency': 0.0,
-                    'credit_in_account_currency': amount,
-                    'against': "Capital Stock - AKFP",
-                    'voucher_type': 'Purchase Receipt',
-                    'voucher_no': self.name,
-                    'remarks': 'Inventory fund for item',
-                    'is_opening': 'No',
-                    'is_advance': 'No',
-                    'fiscal_year': '2024-2025',
-                    'company': self.company,
-                    'transaction_currency': 'PKR',
-                    'debit_in_transaction_currency': 0.0,
-                    'credit_in_transaction_currency':amount,
-                    'transaction_exchange_rate': 1,
-                    'project': project,
-                    'program': program,
-                    'party_type': 'Donor',
-                    'party': donor,
-                    'subservice_area': subservice_area,
-                    'donor': donor,
-                    'inventory_flag': 'Purchased',
-                    'product': product
-                })
-                gl_entry_inventory_fund.insert(ignore_permissions=True)
-                gl_entry_inventory_fund.submit()
-
-            else:
-                for i, donor_entry in enumerate(donor_list):
-                    donor = donor_entry.get('donor')
-                    cost_center = donor_entry.get('cost_center')
-                    project = donor_entry.get('project')
-                    program = donor_entry.get('program')
-                    subservice_area = donor_entry.get('subservice_area')
-                    amount = donor_entry.get('amount', 0.0)
-                    product = donor_entry.get('product')
-
-                    if i == len(donor_list) - 1:
-                        amount += remaining_amount
-                        frappe.msgprint(f"Donor {donor} is debited by an additional {remaining_amount} PKR.")
-                    elif len(donor_list) == 1:
-                        amount
-                        frappe.msgprint(f"Donor {donor} is debited by an additional {remaining_amount} PKR.")
-
-                    gl_entry = frappe.get_doc({
-                        'doctype': 'GL Entry',
-                        'posting_date': self.posting_date,
-                        'transaction_date': self.posting_date,
-                        'account': "Capital Stock - AKFP",
-                        'against_voucher_type': 'Purchase Receipt',
-                        'against_voucher': self.name,
-                        'cost_center': cost_center,
-                        'debit': amount,
-                        'credit': 0.0,
-                        'account_currency': 'PKR',
-                        'debit_in_account_currency': amount,
-                        'credit_in_account_currency': 0.0,
-                        'against': "Capital Stock - AKFP",
-                        'voucher_type': 'Purchase Receipt',
-                        'voucher_no': self.name,
-                        'remarks': 'Donation for item',
-                        'is_opening': 'No',
-                        'is_advance': 'No',
-                        'fiscal_year': '2024-2025',
-                        'company': self.company,
-                        'transaction_currency': 'PKR',
-                        'debit_in_transaction_currency': amount,
-                        'credit_in_transaction_currency': 0.0,
-                        'transaction_exchange_rate': 1,
-                        'project': project,
-                        'program': program,
-                        'party_type': 'Donor',
-                        'party': donor,
-                        'subservice_area': subservice_area,
-                        'donor': donor,
-                        'inventory_flag': 'Purchased',
-                        'product': product
-                    })
-
-                    gl_entry.insert(ignore_permissions=True)
-                    gl_entry.submit()
-
-                    gl_entry_inventory_fund = frappe.get_doc({
-                    'doctype': 'GL Entry',
-                    'posting_date': self.posting_date,
-                    'transaction_date': self.posting_date,
-                    'account': inventory_account,  
-                    'against_voucher_type': 'Purchase Receipt',
-                    'against_voucher': self.name,
-                    'cost_center': cost_center,
-                    'debit': 0.0,
-                    'credit': amount,
-                    'account_currency': 'PKR',
-                    'debit_in_account_currency': 0.0,
-                    'credit_in_account_currency': amount,
-                    'against': "Capital Stock - AKFP",
-                    'voucher_type': 'Purchase Receipt',
-                    'voucher_no': self.name,
-                    'remarks': 'Inventory fund for item',
-                    'is_opening': 'No',
-                    'is_advance': 'No',
-                    'fiscal_year': '2024-2025',
-                    'company': self.company,
-                    'transaction_currency': 'PKR',
-                    'debit_in_transaction_currency': 0.0,
-                    'credit_in_transaction_currency':amount,
-                    'transaction_exchange_rate': 1,
-                    'project': project,
-                    'program': program,
-                    'party_type': 'Donor',
-                    'party': donor,
-                    'subservice_area': subservice_area,
-                    'donor': donor,
-                    'inventory_flag': 'Purchased',
-                    'product': product
-                })
-                    gl_entry_inventory_fund.insert(ignore_permissions=True)
-                    gl_entry_inventory_fund.submit()
-
+           
         elif remaining_amount < 0:
             required_amount_for_item = required_total
             last_donor_not_fully_used = None 
@@ -456,7 +279,7 @@ class XPurchaseReceipt(PurchaseReceipt):
                     break  
 
             if last_donor_not_fully_used:
-                frappe.msgprint(f"The last donor whose full amount has not been used is {last_donor_not_fully_used}.")
+                frappe.msgprint(f"Donor whose full amount has not been used is {last_donor_not_fully_used}.")
 
             frappe.msgprint("GL Entries created successfully.")
     def donor_list_data_from_purchase_receipt(self):
@@ -536,6 +359,110 @@ class XPurchaseReceipt(PurchaseReceipt):
                                 and item_code = '{row.item_code}'
                                 and warehouse = '{row.warehouse}'
                         """)
+# @frappe.whitelist()
+# def donor_list_data(doc):
+#     try:
+#         doc = frappe.get_doc(json.loads(doc))
+#     except (json.JSONDecodeError, TypeError) as e:
+#         frappe.throw(f"Invalid input: {e}")
+
+#     donor_list = []
+#     total_balance = 0
+#     unique_entries = set()
+#     docstatus = doc.docstatus
+
+#     for p in doc.custom_program_details:
+#         condition_parts = [
+#             f"(subservice_area = '{p.pd_subservice_area}' OR (subservice_area IS NULL AND '{p.pd_subservice_area}' = '') OR subservice_area = '')" if p.pd_subservice_area else "1=1",
+#             f"(donor = '{p.pd_donor}' OR (donor IS NULL AND '{p.pd_donor}' = '') OR donor = '')" if p.pd_donor else "1=1",
+#             f"(project = '{p.pd_project}' OR (project IS NULL AND '{p.pd_project}' = '') OR project = '')" if p.pd_project else "1=1",
+#             f"(cost_center = '{p.pd_cost_center}' OR (cost_center IS NULL AND '{p.pd_cost_center}' = '') OR cost_center = '')" if p.pd_cost_center else "1=1",
+#             f"(product = '{p.pd_product}' OR (product IS NULL AND '{p.pd_product}' = '') OR product = '')" if p.pd_product else "1=1",
+#             f"(program = '{p.pd_service_area}' OR (program IS NULL AND '{p.pd_service_area}' = '') OR program = '')" if p.pd_service_area else "1=1"
+#         ]
+#         condition = " AND ".join(condition_parts)
+#         try:
+#             donor_entries = frappe.db.sql(f"""
+#                 SELECT SUM(credit - debit) as total_balance,
+#                        donor,
+#                        program,
+#                        subservice_area,
+#                        project,
+#                        cost_center,
+#                        product
+#                 FROM `tabGL Entry`
+#                 WHERE 
+#                     account = 'Capital Stock - AKFP'
+#                     {f'AND {condition}' if condition else ''}
+#                 GROUP BY donor, program, subservice_area, project, cost_center, product
+#                 HAVING total_balance >= -1000000
+#                 ORDER BY total_balance DESC
+#             """, as_dict=True)
+#         except Exception as e:
+#             frappe.throw(f"Error executing query: {e}")
+
+#         match_found = False
+
+#         for entry in donor_entries:
+#             if ((entry.get('program') == p.pd_service_area or (not entry.get('program') and not p.pd_service_area)) and
+#                 (entry.get('subservice_area') == p.pd_subservice_area or (not entry.get('subservice_area') and not p.pd_subservice_area)) and
+#                 (entry.get('project') == p.pd_project or (not entry.get('project') and not p.pd_project)) and
+#                 (entry.get('cost_center') == p.pd_cost_center or (not entry.get('cost_center') and not p.pd_cost_center)) and
+#                 (entry.get('product') == p.pd_product or (not entry.get('product') and not p.pd_product))):
+
+#                 entry_key = (
+#                     entry.get('donor'), 
+#                     entry.get('program'), 
+#                     entry.get('subservice_area'), 
+#                     entry.get('project'),
+#                     entry.get('cost_center'),
+#                     entry.get('product'),
+#                 )
+
+#                 if entry_key not in unique_entries:
+#                     unique_entries.add(entry_key)
+#                     balance = entry['total_balance']
+#                     used_amount = 0
+
+#                     if docstatus == 1:
+#                         try:
+#                             used_amount_data = frappe.db.sql(f"""
+#                                 SELECT SUM(debit) as used_amount
+#                                 FROM `tabGL Entry`
+#                                 WHERE 
+#                                     account = 'Capital Stock - AKFP'
+#                                     AND voucher_no = '{doc.name}'
+#                                     {f'AND {condition}' if condition else ''}
+#                             """, as_dict=True)
+#                             if used_amount_data:
+#                                 used_amount = used_amount_data[0].get('used_amount', 0)
+#                         except Exception as e:
+#                             frappe.throw(f"Error fetching used amount: {e}")
+
+#                     donor_list.append({
+#                         "donor": p.pd_donor,
+#                         "service_area": p.pd_service_area,
+#                         "subservice_area": p.pd_subservice_area,
+#                         "project": p.pd_project,
+#                         "cost_center": p.pd_cost_center,
+#                         "product": p.pd_product,
+#                         "balance": balance,
+#                         "used_amount": used_amount,
+#                     })
+
+#                     total_balance += balance
+#                     match_found = True
+#                     break
+
+#         if not match_found:
+#             frappe.msgprint(f'No such entry exists for donor "<bold>{p.pd_donor}</bold>" with provided details.')
+
+#     return {
+#         "total_balance": total_balance,
+#         "donor_list": donor_list  
+#     }
+
+
 @frappe.whitelist()
 def donor_list_data(doc):
     try:
@@ -548,7 +475,24 @@ def donor_list_data(doc):
     unique_entries = set()
     docstatus = doc.docstatus
 
+    processed_entries = set()
+
     for p in doc.custom_program_details:
+        entry_key = (
+            p.pd_donor,
+            p.pd_service_area,
+            p.pd_subservice_area,
+            p.pd_project,
+            p.pd_cost_center,
+            p.pd_product,
+        )
+
+        if entry_key in processed_entries:
+            frappe.msgprint(f"Duplicate Entry detected for donor '<bold>{p.pd_donor}</bold>' with provided details.")
+            continue
+
+        processed_entries.add(entry_key)
+
         condition_parts = [
             f"(subservice_area = '{p.pd_subservice_area}' OR (subservice_area IS NULL AND '{p.pd_subservice_area}' = '') OR subservice_area = '')" if p.pd_subservice_area else "1=1",
             f"(donor = '{p.pd_donor}' OR (donor IS NULL AND '{p.pd_donor}' = '') OR donor = '')" if p.pd_donor else "1=1",
@@ -632,7 +576,7 @@ def donor_list_data(doc):
                     break
 
         if not match_found:
-            frappe.msgprint(f'No such entry exists for donor "<bold>{p.pd_donor}</bold>" with provided details.')
+            frappe.msgprint(f"No such entry exists for donor '<bold>{p.pd_donor}</bold>' with provided details.")
 
     return {
         "total_balance": total_balance,
