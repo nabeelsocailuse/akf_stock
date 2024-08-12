@@ -387,6 +387,7 @@ class XStockEntry(StockEntry):
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
             debit_gl.insert()
             debit_gl.submit()
 
@@ -401,6 +402,7 @@ class XStockEntry(StockEntry):
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
 
@@ -435,6 +437,7 @@ class XStockEntry(StockEntry):
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
             debit_gl.insert()
             debit_gl.submit()
 
@@ -450,6 +453,7 @@ class XStockEntry(StockEntry):
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
 
@@ -471,6 +475,7 @@ class XStockEntry(StockEntry):
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
+            debit_gl.flags.ignore_permissions = True
             debit_gl.insert()
             debit_gl.submit()
 
@@ -486,6 +491,7 @@ class XStockEntry(StockEntry):
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
+            credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
 
