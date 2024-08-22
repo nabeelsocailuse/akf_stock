@@ -93,7 +93,7 @@ function set_inventory_flag(frm){
   if (
     frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted" ||
     frm.doc.stock_entry_type == "Donated Inventory Consumption - Restricted" ||
-    frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted"
+    frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted" || frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted"
   ) {
     (frm.doc.items || []).forEach((item) => {
       frappe.model.set_value(

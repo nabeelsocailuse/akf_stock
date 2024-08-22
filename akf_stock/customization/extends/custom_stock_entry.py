@@ -289,7 +289,7 @@ class XStockEntry(StockEntry):
     def validate_qty(self):
         if (
             self.stock_entry_type == "Donated Inventory Consumption - Restricted"
-            or self.stock_entry_type == "Donated Inventory Transfer - Restricted"
+            or self.stock_entry_type == "Donated Inventory Transfer - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted"
         ):
             for item in self.items:
                 condition_parts = [
@@ -352,7 +352,7 @@ class XStockEntry(StockEntry):
                     frappe.throw(f"Error executing query: {e}")
 
                 for di in donated_invetory:
-                    if di.donated_qty > item.qty:
+                    if di.donated_qty >= item.qty:
                         pass
                     else:
                         frappe.throw(
@@ -494,11 +494,24 @@ class XStockEntry(StockEntry):
             credit_gl.flags.ignore_permissions = True
             credit_gl.insert()
             credit_gl.submit()
+        
+        elif self.stock_entry_type == "Donated Inventory Disposal - Restricted":
+            pass
 
     def get_gl_entry_dict(self):
         cost_center = ""
+        service_area = ""
+        subservice_area = ""
+        product = ""
+        project = ""
+
         for item in self.items:
             cost_center = item.cost_center
+            service_area = item.program
+            subservice_area = item.subservice_area
+            product = item.product
+            project = item.project
+
         return frappe._dict(
             {
                 "doctype": "GL Entry",
@@ -506,16 +519,18 @@ class XStockEntry(StockEntry):
                 "transaction_date": self.posting_date,
                 "party_type": "Donor",
                 "party": self.donor,
-                "cost_center": cost_center,
                 "against": f"Stock Entry: {self.name}",
                 "against_voucher_type": "Stock Entry",
                 "against_voucher": self.name,
                 "voucher_type": "Stock Entry",
                 "voucher_subtype": self.stock_entry_type,
                 "voucher_no": self.name,
-                "project": self.project,
                 "company": self.company,
-                "program": self.program,
+                "cost_center": cost_center,
+                "program": service_area,
+                "subservice_area": subservice_area,
+                "product": product,
+                "project": project,
             }
         )
 
@@ -528,7 +543,7 @@ class XStockEntry(StockEntry):
                     "Warehouse", target_warehouse, "custom_cost_center"
                 )
                 item.cost_center = target_cost_center
-            elif self.stock_entry_type == "Donated Inventory Consumption - Restricted":
+            elif self.stock_entry_type == "Donated Inventory Consumption - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted":
                 source_warehouse = item.s_warehouse
                 source_cost_center = frappe.db.get_value(
                     "Warehouse", source_warehouse, "custom_cost_center"

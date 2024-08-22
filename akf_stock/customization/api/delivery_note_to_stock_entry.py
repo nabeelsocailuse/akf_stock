@@ -71,11 +71,13 @@ def _make_stock_entry_(source_name, stock_entry_type, target_doc=None):
 
 
 def get_receive_qty(source_name, in_transit_warehouse, row):
+        # frappe.throw(frappe.as_json(row))
         qty = frappe.db.sql(f""" 
             select ifnull(sum(actual_qty),0) as qty
             from `tabStock Ledger Entry` 
             where 
                 docstatus=1
+                and item_code = "{row.item_code}"
                 and warehouse = "{in_transit_warehouse}"
                 and voucher_no in (select name
                     from `tabStock Entry` 
