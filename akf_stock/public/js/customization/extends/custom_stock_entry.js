@@ -2,14 +2,10 @@ frappe.ui.form.on("Stock Entry", {
   refresh: function (frm) {
     set_queries(frm);
     set_inventory_flag(frm);
-    // toggle_fields(frm);
   },
   stock_entry_type: function (frm) {
     if (
-      frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted" ||
-      frm.doc.stock_entry_type == "Donated Inventory Consumption - Restricted" ||
-      frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted"
-    ) {
+      frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") {
       (frm.doc.items || []).forEach((item) => {
         frappe.model.set_value(
           "Stock Entry Detail",
@@ -17,21 +13,21 @@ frappe.ui.form.on("Stock Entry", {
           "inventory_flag",
           "Donated"
         );
-      });
-    } else {
-      (frm.doc.items || []).forEach((item) => {
+  
         frappe.model.set_value(
           "Stock Entry Detail",
           item.name,
-          "inventory_flag",
-          "Purchased"
+          "inventory_scenario",
+          "Restricted"
         );
       });
+      frm.get_field("items").grid.toggle_display("inventory_flag", false);
+      frm.get_field("items").grid.toggle_display("inventory_scenario", false);
+    } else {
+      frm.get_field("items").grid.toggle_display("inventory_flag", true);
+      frm.get_field("items").grid.toggle_display("inventory_scenario", true);
     }
   },
-  //   stock_entry_type: function (frm) {
-  //     toggle_fields(frm);
-  //   },
 });
 
 frappe.ui.form.on("Stock Entry Detail", {
@@ -91,10 +87,7 @@ function set_queries(frm) {
 
 function set_inventory_flag(frm){
   if (
-    frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted" ||
-    frm.doc.stock_entry_type == "Donated Inventory Consumption - Restricted" ||
-    frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted" || frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted"
-  ) {
+    frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") {
     (frm.doc.items || []).forEach((item) => {
       frappe.model.set_value(
         "Stock Entry Detail",
@@ -102,24 +95,18 @@ function set_inventory_flag(frm){
         "inventory_flag",
         "Donated"
       );
-    });
-  } else {
-    (frm.doc.items || []).forEach((item) => {
+
       frappe.model.set_value(
         "Stock Entry Detail",
         item.name,
-        "inventory_flag",
-        "Purchased"
+        "inventory_scenario",
+        "Restricted"
       );
     });
+    frm.get_field("items").grid.toggle_display("inventory_flag", false);
+    frm.get_field("items").grid.toggle_display("inventory_scenario", false);
+  } else {
+    frm.get_field("items").grid.toggle_display("inventory_flag", true);
+    frm.get_field("items").grid.toggle_display("inventory_scenario", true);
   }
 }
-// function toggle_fields(frm){
-//     if(frm.doc.stock_entry_type!="Donation"){
-//         frm.get_field("items").grid.toggle_display("custom_new", false);
-//         frm.get_field("items").grid.toggle_display("custom_used", false);
-//     }else{
-//         frm.get_field("items").grid.toggle_display("custom_new", true);
-//         frm.get_field("items").grid.toggle_display("custom_used", true);
-//     }
-// }
