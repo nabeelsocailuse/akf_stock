@@ -44,7 +44,31 @@ frappe.ui.form.on("Stock Entry Detail", {
             row.custom_new = 0;
         }
         frm.refresh_field("items")
-    }
+    },
+    program: function(frm, cdt, cdn){
+      let row = locals[cdt][cdn];
+      if(row.program){
+          row.subservice_area = "";
+          row.product = "";
+          row.project = "";
+      }
+      frm.refresh_field("items")
+    },
+    subservice_area: function(frm, cdt, cdn){
+      let row = locals[cdt][cdn];
+      if(row.program){
+          row.product = "";
+          row.project = "";
+      }
+      frm.refresh_field("items")
+    },
+    product: function(frm, cdt, cdn){
+      let row = locals[cdt][cdn];
+      if(row.program){
+          row.project = "";
+      }
+      frm.refresh_field("items")
+    },
 });
 
 function set_queries(frm) {
