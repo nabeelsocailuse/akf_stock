@@ -194,7 +194,7 @@ class XStockEntry(StockEntry):
                 frappe.db.sql(
                     f""" 
                         update `tabStock Ledger Entry`
-                        set custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.custom_target_project}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', project='{row.project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}'
+                        set custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', project='{row.project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}'
                         where docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -356,7 +356,7 @@ class XStockEntry(StockEntry):
                         pass
                     else:
                         frappe.throw(
-                            f"{item.item_code} quantity doesn't exist against condtions {condition}"
+                            f"{item.item_code} quantity doesn't exist!" #against condtions {condition}
                         )
         else:
             super(XStockEntry, self).validate_qty()
