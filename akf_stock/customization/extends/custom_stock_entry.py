@@ -194,7 +194,7 @@ class XStockEntry(StockEntry):
                 frappe.db.sql(
                     f""" 
                         update `tabStock Ledger Entry`
-                        set custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', project='{row.project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}'
+                        set custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}'
                         where docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -287,10 +287,9 @@ class XStockEntry(StockEntry):
             d.expense_account = company.custom_default_inventory_fund_account
 
     def validate_qty(self):
-        if (
-            self.stock_entry_type == "Inventory Consumption - Restricted"
-            or self.stock_entry_type == "Inventory Transfer - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted"
-        ):
+        # (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
+        if ((self.stock_entry_type == "Inventory Consumption - Restricted")
+            or (self.stock_entry_type == "Inventory Transfer - Restricted") or (self.stock_entry_type == "Donated Inventory Disposal - Restricted")):
             for item in self.items:
                 condition_parts = [
                     (
@@ -306,6 +305,11 @@ class XStockEntry(StockEntry):
                     (
                         f"(warehouse = '{item.s_warehouse}' OR (warehouse IS NULL AND '{item.s_warehouse}' = '') OR warehouse = '')"
                         if item.s_warehouse
+                        else "1=1"
+                    ),
+                    (
+                        f"(custom_cost_center = '{item.cost_center}' OR (custom_cost_center IS NULL AND '{item.cost_center}' = '') OR custom_cost_center = '')"
+                        if item.cost_center
                         else "1=1"
                     ),
                     (
@@ -407,8 +411,6 @@ class XStockEntry(StockEntry):
             credit_gl.submit()
 
         elif self.stock_entry_type == "Inventory Transfer - Restricted":
-            debit_account = company.default_inventory_account
-            credit_account = company.custom_default_inventory_fund_account
 
             source_cost_center, target_cost_center = "", ""
             for item in self.items:
@@ -422,6 +424,9 @@ class XStockEntry(StockEntry):
                     "Warehouse", target_warehouse, "custom_cost_center"
                 )
 
+            debit_account = company.default_inventory_account
+            credit_account = company.custom_default_inventory_fund_account
+
             if not debit_account or not credit_account:
                 frappe.throw("Required accounts not found in the company")
             # Create the GL entry for the debit account and update
@@ -430,7 +435,7 @@ class XStockEntry(StockEntry):
                 {
                     "account": debit_account,
                     "debit": self.total_incoming_value,
-                    "cost_center": source_cost_center,
+                    "cost_center": target_cost_center,
                     "credit": 0,
                     "debit_in_account_currency": self.total_incoming_value,
                     "credit_in_account_currency": 0,
@@ -484,7 +489,7 @@ class XStockEntry(StockEntry):
                 {
                     "account": credit_account,
                     "debit": 0,
-                    "cost_center": target_cost_center,
+                    "cost_center": source_cost_center,
                     "credit": self.total_incoming_value,
                     "debit_in_account_currency": 0,
                     "credit_in_account_currency": self.total_incoming_value,

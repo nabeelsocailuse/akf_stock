@@ -222,6 +222,13 @@ def get_columns(filters):
             "width": 225,
         },
 		{
+            "label": _("Cost Center"),
+            "fieldname": "custom_cost_center",
+            "fieldtype": "Link",
+            "options": "Cost Center",
+            "width": 225,
+        },
+		{
 			"label": _("Stock UOM"),
 			"fieldname": "stock_uom",
 			"fieldtype": "Link",
@@ -412,6 +419,7 @@ def get_stock_ledger_entries(filters, items):
 			sle.custom_donor_list,
 			sle.inventory_flag,
 			sle.inventory_scenario,
+			sle.custom_cost_center
 		)
 		.where(
 			(sle.docstatus < 2)
