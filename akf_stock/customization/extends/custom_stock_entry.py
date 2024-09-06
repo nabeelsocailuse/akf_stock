@@ -4,6 +4,10 @@ from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
 
 
 class XStockEntry(StockEntry):
+    def before_validate(self):
+        super(XStockEntry, self).before_validate()
+        self.validate_warehouse_cost_centers()
+
     def validate(self):
         super(XStockEntry, self).validate()
         self.validate_difference_account()
@@ -689,7 +693,7 @@ class XStockEntry(StockEntry):
                     "Warehouse", target_warehouse, "custom_cost_center"
                 )
                 item.cost_center = target_cost_center
-            elif self.stock_entry_type == "Inventory Consumption - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted":
+            elif self.stock_entry_type == "Inventory Consumption - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted" or self.stock_entry_type == "Inventory Transfer - Restricted":
                 source_warehouse = item.s_warehouse
                 source_cost_center = frappe.db.get_value(
                     "Warehouse", source_warehouse, "custom_cost_center"
