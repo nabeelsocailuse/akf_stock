@@ -291,9 +291,8 @@ class XStockEntry(StockEntry):
             d.expense_account = company.custom_default_inventory_fund_account
 
     def validate_qty(self):
-        # (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
         if ((self.stock_entry_type == "Inventory Consumption - Restricted")
-            or (self.stock_entry_type == "Inventory Transfer - Restricted") or (self.stock_entry_type == "Donated Inventory Disposal - Restricted")):
+            or (self.stock_entry_type == "Inventory Transfer - Restricted") or (self.stock_entry_type == "Donated Inventory Disposal - Restricted") or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)):
             for item in self.items:
                 condition_parts = [
                     (

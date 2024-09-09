@@ -37,7 +37,7 @@ frappe.ui.form.on("Stock Entry Detail", {
             row.custom_used = 0;
         }
         frm.refresh_field("items")
-        et_queries(frm);
+        set_queries(frm);
     },
     custom_used: function(frm, cdt, cdn){
         let row = locals[cdt][cdn];
@@ -45,7 +45,7 @@ frappe.ui.form.on("Stock Entry Detail", {
             row.custom_new = 0;
         }
         frm.refresh_field("items")
-        et_queries(frm);
+        set_queries(frm);
     },
     program: function(frm, cdt, cdn){
       let row = locals[cdt][cdn];
@@ -55,7 +55,7 @@ frappe.ui.form.on("Stock Entry Detail", {
           row.project = "";
       }
       frm.refresh_field("items")
-      et_queries(frm);
+      set_queries(frm);
     },
     subservice_area: function(frm, cdt, cdn){
       let row = locals[cdt][cdn];
@@ -64,7 +64,7 @@ frappe.ui.form.on("Stock Entry Detail", {
           row.project = "";
       }
       frm.refresh_field("items")
-      et_queries(frm);
+      set_queries(frm);
     },
     product: function(frm, cdt, cdn){
       let row = locals[cdt][cdn];
@@ -72,7 +72,7 @@ frappe.ui.form.on("Stock Entry Detail", {
           row.project = "";
       }
       frm.refresh_field("items")
-      et_queries(frm);
+      set_queries(frm);
     },
 });
 
