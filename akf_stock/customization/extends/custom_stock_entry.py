@@ -1,6 +1,8 @@
 import frappe
 import json
 from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
+from frappe.model.mapper import get_mapped_doc
+from frappe.utils import flt
 
 
 class XStockEntry(StockEntry):
@@ -197,9 +199,9 @@ class XStockEntry(StockEntry):
             ):
                 frappe.db.sql(
                     f""" 
-                        update `tabStock Ledger Entry`
-                        set custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}'
-                        where docstatus=1 
+                        UPDATE `tabStock Ledger Entry`
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}'
+                        WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
                     """
@@ -208,6 +210,7 @@ class XStockEntry(StockEntry):
         if self.custom_donor_ids:
             # Initialize an empty list to store child values
             child_values = []
+            donor_names = []
 
             # Fetch child table records for the current parent document
             child_records = frappe.get_all(
@@ -219,6 +222,8 @@ class XStockEntry(StockEntry):
             # Loop through each child record and process the values
             for child in child_records:
                 child_values.append(child.donor)
+                donor=frappe.db.get_value('Donor',child.donor,'donor_name')
+                donor_names.append(donor)
 
             if frappe.db.exists(
                 "Stock Ledger Entry",
@@ -239,6 +244,21 @@ class XStockEntry(StockEntry):
                                 and voucher_no = '{self.name}'
                         """
                 )
+
+                donor_names_as_string = json.dumps(donor_names)
+                frappe.db.sql(
+                    f""" 
+                            update 
+                                `tabStock Ledger Entry`
+                            set 
+                                custom_donor_name_list = '{donor_names_as_string}'
+                            where 
+                                docstatus=1 
+                                and voucher_no = '{self.name}'
+                        """
+                )
+
+                
 
     def on_trash(self):
         self.cancel_linked_records()
@@ -290,9 +310,10 @@ class XStockEntry(StockEntry):
         for d in self.get("items"):
             d.expense_account = company.custom_default_inventory_fund_account
 
+    # or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
     def validate_qty(self):
         if ((self.stock_entry_type == "Inventory Consumption - Restricted")
-            or (self.stock_entry_type == "Inventory Transfer - Restricted") or (self.stock_entry_type == "Donated Inventory Disposal - Restricted") or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)):
+            or (self.stock_entry_type == "Inventory Transfer - Restricted") or (self.stock_entry_type == "Donated Inventory Disposal - Restricted")):
             for item in self.items:
                 condition_parts = [
                     (
@@ -698,3 +719,60 @@ class XStockEntry(StockEntry):
                     "Warehouse", source_warehouse, "custom_cost_center"
                 )
                 item.cost_center = source_cost_center
+
+    # # Check for over quantity
+    # def over_quantity_validation():
+    #     if target_doc.qty > (source_doc.qty - source_doc.transferred_qty):
+    #         frappe.throw("Errorrrrr")
+
+@frappe.whitelist()
+def make_stock_in_lost_entry(source_name, target_doc=None):
+	def set_missing_values(source, target):
+		target.stock_entry_type = "Lost / Wastage"
+		target.set_missing_values()
+		target.make_serial_and_batch_bundle_for_transfer()
+
+	def update_item(source_doc, target_doc, source_parent):
+		target_doc.t_warehouse = ""
+
+		if source_doc.material_request_item and source_doc.material_request:
+			add_to_transit = frappe.db.get_value("Stock Entry", source_name, "add_to_transit")
+			if add_to_transit:
+				warehouse = frappe.get_value(
+					"Material Request Item", source_doc.material_request_item, "warehouse"
+				)
+				target_doc.t_warehouse = warehouse
+
+		target_doc.s_warehouse = source_doc.t_warehouse
+		target_doc.qty = source_doc.qty - source_doc.transferred_qty
+        
+        
+            
+
+	doclist = get_mapped_doc(
+		"Stock Entry",
+		source_name,
+		{
+			"Stock Entry": {
+				"doctype": "Stock Entry",
+				"field_map": {"name": "outgoing_stock_entry"},
+				"validation": {"docstatus": ["=", 1]},
+			},
+			"Stock Entry Detail": {
+				"doctype": "Stock Entry Detail",
+				"field_map": {
+					"name": "ste_detail",
+					"parent": "against_stock_entry",
+					"serial_no": "serial_no",
+					"batch_no": "batch_no",
+				},
+				"postprocess": update_item,
+				"condition": lambda doc: flt(doc.qty) - flt(doc.transferred_qty) > 0.01,
+			},
+		},
+		target_doc,
+		set_missing_values,
+	)
+
+	return doclist
+
