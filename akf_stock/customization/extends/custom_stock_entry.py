@@ -317,69 +317,80 @@ class XStockEntry(StockEntry):
             for item in self.items:
                 condition_parts = [
                     (
-                        f"(custom_new = '{item.custom_new}' OR (custom_new IS NULL AND '{item.custom_new}' = '') OR custom_new = '')"
+                        f" and custom_new = {item.custom_new} "
                         if item.custom_new
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(custom_used = '{item.custom_used}' OR (custom_used IS NULL AND '{item.custom_used}' = '') OR custom_used = '')"
+                        f" and custom_used = {item.custom_used} "
                         if item.custom_used
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(warehouse = '{item.s_warehouse}' OR (warehouse IS NULL AND '{item.s_warehouse}' = '') OR warehouse = '')"
+                        f" and warehouse = '{item.s_warehouse}' "
                         if item.s_warehouse
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(custom_cost_center = '{item.cost_center}' OR (custom_cost_center IS NULL AND '{item.cost_center}' = '') OR custom_cost_center = '')"
+                        f" and custom_cost_center = '{item.cost_center}' "
                         if item.cost_center
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(inventory_flag = '{item.inventory_flag}' OR (inventory_flag IS NULL AND '{item.inventory_flag}' = '') OR inventory_flag = '')"
+                        f" and inventory_flag = '{item.inventory_flag}' "
                         if item.inventory_flag
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(program = '{item.program}' OR (program IS NULL AND '{item.program}' = '') OR program = '')"
+                        f" and inventory_scenario = '{item.inventory_scenario}' "
+                        if item.inventory_scenario
+                        else ""
+                    ),
+                    (
+                        f" and program = '{item.program}' "
                         if item.program
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(subservice_area = '{item.subservice_area}' OR (subservice_area IS NULL AND '{item.subservice_area}' = '') OR subservice_area = '')"
+                        f" and subservice_area = '{item.subservice_area}' "
                         if item.subservice_area
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(product = '{item.product}' OR (product IS NULL AND '{item.product}' = '') OR product = '')"
+                        f" and product = '{item.product}' "
                         if item.product
-                        else "1=1"
+                        else ""
                     ),
                     (
-                        f"(project = '{item.project}' OR (project IS NULL AND '{item.project}' = '') OR project = '')"
+                        f" and project = '{item.project}' "
                         if item.project
-                        else "1=1"
+                        else ""
                     ),
                 ]
-                condition = " AND ".join(condition_parts)
+                condition = "  ".join(condition_parts)
+                # frappe.throw(f"condition: {condition}")
 
-                try:
-                    donated_invetory = frappe.db.sql(
-                        f"""
+                query = f"""
                         SELECT ifnull(SUM(actual_qty),0) as donated_qty,
                             item_code
                         FROM `tabStock Ledger Entry`
                         WHERE
                             item_code='{item.item_code}'
-                            {f'AND {condition}' if condition else ''}
-                    """,
+                            {f'{condition}' if condition else ''}
+                    """
+                
+                frappe.msgprint(f"query: {query}")
+                try:
+                    donated_invetory = frappe.db.sql(
+                        query,
                         as_dict=True,
                     )
+                    frappe.msgprint(f"DI: {donated_invetory}")
                 except Exception as e:
                     frappe.throw(f"Error executing query: {e}")
 
                 for di in donated_invetory:
+                    frappe.msgprint("inside loop")
                     if di.donated_qty >= item.qty:
                         pass
                     else:
