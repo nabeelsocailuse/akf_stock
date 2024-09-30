@@ -16,25 +16,25 @@ frappe.ui.form.on("Stock Entry", {
   },
   // Below code is added by Mubashir Bashir
   // ////////////////////START/////////////////////////
-  onload: function (frm) {    
+  onload: function (frm) {
     frm.original_qty_values = {};
-    frm.doc.items.forEach(function(item) {
-      frm.original_qty_values[item.name] = item.qty; 
-    });       
+    frm.doc.items.forEach(function (item) {
+      frm.original_qty_values[item.name] = item.qty;
+    });
   },
-  validate: function(frm) {
-    var exceeded = false;
-    frm.doc.items.forEach(function(item) {
-        var original_qty = frm.original_qty_values[item.name];
+  validate: function (frm) {
+    frm.doc.items.forEach(function (item) {
+      var original_qty = frm.original_qty_values[item.name];
 
-        if (item.qty > original_qty) {
-            exceeded = true;
-            frappe.throw(`The quantity for item ${item.item_code} cannot exceed ${original_qty}`);
-        }
+      if (item.qty > original_qty) {
+        frappe.throw(`The quantity for item ${item.item_code} cannot exceed ${original_qty}`);
+      }
     });
   },
   // ////////////////////END/////////////////////////
   stock_entry_type: function (frm) {
+    set_inventory_flag(frm);
+    unhide_dimensions(frm);
     if (
       frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") {
       (frm.doc.items || []).forEach((item) => {
@@ -146,8 +146,7 @@ function set_queries(frm) {
 }
 
 function set_inventory_flag(frm) {
-  if (
-    frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") {
+  if ((frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted")) {
     (frm.doc.items || []).forEach((item) => {
       frappe.model.set_value(
         "Stock Entry Detail",
@@ -168,5 +167,26 @@ function set_inventory_flag(frm) {
   } else {
     frm.get_field("items").grid.toggle_display("inventory_flag", true);
     frm.get_field("items").grid.toggle_display("inventory_scenario", true);
+  }
+
+  if (frm.doc.purpose != "Material Issue") {
+    frm.get_field("items").grid.toggle_display("custom_target_project", true);
+  }
+  else {
+    frm.get_field("items").grid.toggle_display("custom_target_project", false);
+  }
+}
+
+function unhide_dimensions(frm) {
+  if ((
+    frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (
+      frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted") || (
+      frm.doc.stock_entry_type == "Inventory Consumption - Restricted") || (
+      frm.doc.stock_entry_type == "Inventory Transfer - Restricted")) {
+    (frm.doc.items || []).forEach((item) => {
+      frm.get_field("items").grid.toggle_display("accounting_dimensions_section", true);
+    });
+  } else {
+    frm.get_field("items").grid.toggle_display("accounting_dimensions_section", false);
   }
 }

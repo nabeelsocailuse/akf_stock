@@ -8,12 +8,12 @@ from frappe.utils import flt
 class XStockEntry(StockEntry):
     def before_validate(self):
         super(XStockEntry, self).before_validate()
-        self.validate_warehouse_cost_centers()
+        self.set_warehouse_cost_centers()
 
     def validate(self):
         super(XStockEntry, self).validate()
         self.validate_difference_account()
-        self.validate_warehouse_cost_centers()
+        self.set_warehouse_cost_centers()
 
     def on_submit(self):
         super(XStockEntry, self).on_submit()
@@ -312,63 +312,62 @@ class XStockEntry(StockEntry):
 
     # or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
     def validate_qty(self):
-        if ((self.stock_entry_type == "Inventory Consumption - Restricted")
-            or (self.stock_entry_type == "Inventory Transfer - Restricted") or (self.stock_entry_type == "Donated Inventory Disposal - Restricted")):
+        super(XStockEntry, self).validate_qty()
+        if ((self.purpose == "Material Issue") or (self.purpose == "Material Transfer")):
             for item in self.items:
                 condition_parts = [
                     (
                         f" and custom_new = {item.custom_new} "
                         if item.custom_new
-                        else ""
+                        else " and custom_new = 0 "
                     ),
                     (
                         f" and custom_used = {item.custom_used} "
                         if item.custom_used
-                        else ""
+                        else " and custom_used = 0 "
                     ),
                     (
                         f" and warehouse = '{item.s_warehouse}' "
                         if item.s_warehouse
-                        else ""
+                        else " and warehouse IS NULL "
                     ),
                     (
                         f" and custom_cost_center = '{item.cost_center}' "
                         if item.cost_center
-                        else ""
+                        else " and custom_cost_center IS NULL "
                     ),
                     (
                         f" and inventory_flag = '{item.inventory_flag}' "
                         if item.inventory_flag
-                        else ""
+                        else " and inventory_flag = 'None' "
                     ),
                     (
                         f" and inventory_scenario = '{item.inventory_scenario}' "
                         if item.inventory_scenario
-                        else ""
+                        else " and inventory_scenario = 'None' "
                     ),
                     (
                         f" and program = '{item.program}' "
                         if item.program
-                        else ""
+                        else " and program IS NULL "
                     ),
                     (
                         f" and subservice_area = '{item.subservice_area}' "
                         if item.subservice_area
-                        else ""
+                        else " and subservice_area IS NULL "
                     ),
                     (
                         f" and product = '{item.product}' "
                         if item.product
-                        else ""
+                        else " and product IS NULL "
                     ),
                     (
                         f" and project = '{item.project}' "
                         if item.project
-                        else ""
+                        else " and project IS NULL "
                     ),
                 ]
                 condition = "  ".join(condition_parts)
-                # frappe.throw(f"condition: {condition}")
 
                 query = f"""
                         SELECT ifnull(SUM(actual_qty),0) as donated_qty,
@@ -379,26 +378,27 @@ class XStockEntry(StockEntry):
                             {f'{condition}' if condition else ''}
                     """
                 
-                frappe.msgprint(f"query: {query}")
+                # frappe.throw(f"query: {query}")
+                
                 try:
                     donated_invetory = frappe.db.sql(
                         query,
                         as_dict=True,
                     )
-                    frappe.msgprint(f"DI: {donated_invetory}")
                 except Exception as e:
                     frappe.throw(f"Error executing query: {e}")
 
                 for di in donated_invetory:
-                    frappe.msgprint("inside loop")
                     if di.donated_qty >= item.qty:
                         pass
                     else:
                         frappe.throw(
-                            f"{item.item_code} quantity doesn't exist!" #against condtions {condition}
-                        )
-        else:
-            super(XStockEntry, self).validate_qty()
+					f"Insufficient quantity for item {item.item_code}. "
+					f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
+					)
+                        # frappe.throw(
+                        #     f"{item.item_code} quantity doesn't exist!" #against condtions {condition}
+                        # )
 
     def create_gl_entries_for_stock_entry(self):
         debit_account, credit_account = "", ""
@@ -715,16 +715,16 @@ class XStockEntry(StockEntry):
             }
         )
 
-    def validate_warehouse_cost_centers(self):
+    def set_warehouse_cost_centers(self):
         for item in self.items:
             source_cost_center, target_cost_center = "", ""
-            if self.stock_entry_type == "Donated Inventory Receive - Restricted":
+            if self.purpose == "Material Receipt":
                 target_warehouse = item.t_warehouse
                 target_cost_center = frappe.db.get_value(
                     "Warehouse", target_warehouse, "custom_cost_center"
                 )
                 item.cost_center = target_cost_center
-            elif self.stock_entry_type == "Inventory Consumption - Restricted" or self.stock_entry_type == "Donated Inventory Disposal - Restricted" or self.stock_entry_type == "Inventory Transfer - Restricted":
+            elif self.purpose == "Material Issue" or self.purpose == "Material Transfer":
                 source_warehouse = item.s_warehouse
                 source_cost_center = frappe.db.get_value(
                     "Warehouse", source_warehouse, "custom_cost_center"

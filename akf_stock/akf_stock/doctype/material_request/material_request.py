@@ -152,7 +152,7 @@ class MaterialRequest(BuyingController):
 		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
 
 
-		self.stop_exceeding_qty() # By Nabeel Saleem
+		# self.stop_exceeding_qty() # By Nabeel Saleem
 
 	def before_update_after_submit(self):
 		self.validate_schedule_date()
@@ -501,6 +501,17 @@ def make_purchase_receipt(source_name, target_doc=None, args=None):
 		child_filter = d.name in filtered_items if filtered_items else True
 
 		return d.ordered_qty < d.stock_qty and child_filter
+	def update_item(obj, target, source_parent):
+		qty = (
+			flt(flt(obj.stock_qty) - flt(obj.received_qty)) / target.conversion_factor
+			if flt(obj.stock_qty) > flt(obj.received_qty)
+			else 0
+		)
+		target.qty = qty
+		target.transfer_qty = qty * obj.conversion_factor
+		target.conversion_factor = obj.conversion_factor
+
+		target.warehouse = obj.warehouse
 
 	doclist = get_mapped_doc(
 		"Material Request",
