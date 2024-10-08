@@ -14,6 +14,7 @@ class XStockEntry(StockEntry):
         super(XStockEntry, self).validate()
         self.validate_difference_account()
         self.set_warehouse_cost_centers()
+        self.set_total_quantity_count()
 
     def on_submit(self):
         super(XStockEntry, self).on_submit()
@@ -21,6 +22,8 @@ class XStockEntry(StockEntry):
         self.set_material_request_status_per_outgoing_stock_entry()
         self.update_stock_ledger_entry()
         self.create_gl_entries_for_stock_entry()
+        self.set_total_quantity_count()
+
 
     def calculate_per_installed_for_delivery_note(self):
         if not self.custom_delivery_note:
@@ -714,6 +717,9 @@ class XStockEntry(StockEntry):
                 "project": project,
             }
         )
+    
+    def set_total_quantity_count(self):
+            self.custom_total_quantity_count = sum([item.qty for item in self.get("items")])
 
     def set_warehouse_cost_centers(self):
         for item in self.items:
