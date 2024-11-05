@@ -381,8 +381,6 @@ class XStockEntry(StockEntry):
                             {f'{condition}' if condition else ''}
                     """
                 
-                # frappe.throw(f"query: {query}")
-                
                 try:
                     donated_invetory = frappe.db.sql(
                         query,
@@ -399,9 +397,6 @@ class XStockEntry(StockEntry):
 					f"Insufficient quantity for item {item.item_code}. "
 					f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
 					)
-                        # frappe.throw(
-                        #     f"{item.item_code} quantity doesn't exist!" #against condtions {condition}
-                        # )
 
     def create_gl_entries_for_stock_entry(self):
         debit_account, credit_account = "", ""
