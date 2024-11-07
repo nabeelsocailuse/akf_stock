@@ -214,6 +214,13 @@ def get_columns(filters):
             "width": 225,
         },
 		{
+            "label": _("Department"),
+            "fieldname": "custom_department",
+            "fieldtype": "Link",
+            "options": "Department",
+            "width": 225,
+        },
+		{
             "label": _("Inventory Flag"),
             "fieldname": "inventory_flag",
             "fieldtype": "Link",
@@ -424,6 +431,7 @@ def get_stock_ledger_entries(filters, items):
 			sle.custom_used,
 			sle.custom_donor_list,
 			sle.custom_donor_name_list,
+			sle.custom_department,
 			sle.inventory_flag,
 			sle.inventory_scenario,
 			sle.custom_cost_center

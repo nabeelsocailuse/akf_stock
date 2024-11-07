@@ -181,8 +181,8 @@ function unhide_dimensions(frm) {
   if ((
     frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (
       frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted") || (
-      frm.doc.stock_entry_type == "Inventory Consumption - Restricted") || (
-      frm.doc.stock_entry_type == "Inventory Transfer - Restricted")) {
+      frm.doc.stock_entry_type == "Donated Inventory Consumption - Restricted") || (
+      frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted")) {
     (frm.doc.items || []).forEach((item) => {
       frm.get_field("items").grid.toggle_display("accounting_dimensions_section", true);
     });

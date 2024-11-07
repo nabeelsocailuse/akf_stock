@@ -203,7 +203,7 @@ class XStockEntry(StockEntry):
                 frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}'
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}', custom_department='{self.custom_department}'
                         WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -342,12 +342,12 @@ class XStockEntry(StockEntry):
                     (
                         f" and inventory_flag = '{item.inventory_flag}' "
                         if item.inventory_flag
-                        else " and inventory_flag = 'None' "
+                        else ""
                     ),
                     (
                         f" and inventory_scenario = '{item.inventory_scenario}' "
                         if item.inventory_scenario
-                        else " and inventory_scenario = 'None' "
+                        else ""
                     ),
                     (
                         f" and program = '{item.program}' "
@@ -405,7 +405,7 @@ class XStockEntry(StockEntry):
         if self.stock_entry_type == "Donated Inventory Receive - Restricted":
             pass
 
-        elif self.stock_entry_type == "Inventory Consumption - Restricted":
+        elif self.stock_entry_type == "Donated Inventory Consumption - Restricted":
             debit_account = company.custom_default_inventory_expense_account
             credit_account = company.default_income_account
 
@@ -443,7 +443,7 @@ class XStockEntry(StockEntry):
             credit_gl.insert()
             credit_gl.submit()
 
-        elif self.stock_entry_type == "Inventory Transfer - Restricted":
+        elif self.stock_entry_type == "Donated Inventory Transfer - Restricted":
 
             source_cost_center, target_cost_center = "", ""
             for item in self.items:

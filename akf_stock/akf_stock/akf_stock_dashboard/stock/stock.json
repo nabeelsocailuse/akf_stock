@@ -1,0 +1,51 @@
+{
+ "cards": [
+  {
+   "card": "Total Active Items"
+  },
+  {
+   "card": "Total Warehouses"
+  },
+  {
+   "card": "Total Stock Value"
+  }
+ ],
+ "charts": [
+  {
+   "chart": "Warehouse wise Stock Value",
+   "width": "Full"
+  },
+  {
+   "chart": "Purchase Receipt Trends",
+   "width": "Half"
+  },
+  {
+   "chart": "Delivery Trends",
+   "width": "Half"
+  },
+  {
+   "chart": "Oldest Items",
+   "width": "Half"
+  },
+  {
+   "chart": "Item Shortage Summary",
+   "width": "Half"
+  },
+  {
+   "chart": "Supplier",
+   "width": "Half"
+  }
+ ],
+ "creation": "2020-07-20 21:01:04.549136",
+ "dashboard_name": "Stock",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 8,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2024-11-05 18:04:43.543957",
+ "modified_by": "Administrator",
+ "module": "AKF Stock",
+ "name": "Stock",
+ "owner": "Administrator"
+}
