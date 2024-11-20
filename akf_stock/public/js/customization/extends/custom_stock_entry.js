@@ -34,9 +34,9 @@ frappe.ui.form.on("Stock Entry", {
   // ////////////////////END/////////////////////////
   stock_entry_type: function (frm) {
     set_inventory_flag(frm);
-    unhide_dimensions(frm);
-    if (
-      frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") {
+    // unhide_dimensions(frm);
+
+    if (frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") {
       (frm.doc.items || []).forEach((item) => {
         frappe.model.set_value(
           "Stock Entry Detail",
@@ -177,16 +177,16 @@ function set_inventory_flag(frm) {
   }
 }
 
-function unhide_dimensions(frm) {
-  if ((
-    frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (
-      frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted") || (
-      frm.doc.stock_entry_type == "Donated Inventory Consumption - Restricted") || (
-      frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted")) {
-    (frm.doc.items || []).forEach((item) => {
-      frm.get_field("items").grid.toggle_display("accounting_dimensions_section", true);
-    });
-  } else {
-    frm.get_field("items").grid.toggle_display("accounting_dimensions_section", false);
-  }
-}
+// function unhide_dimensions(frm) {
+//   if ((
+//     frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (
+//       frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted") || (
+//       frm.doc.stock_entry_type == "Donated Inventory Consumption - Restricted") || (
+//       frm.doc.stock_entry_type == "Donated Inventory Transfer - Restricted")) {
+//     (frm.doc.items || []).forEach((item) => {
+//       frm.get_field("items").grid.toggle_display("accounting_dimensions_section", true);
+//     });
+//   } else {
+//     frm.get_field("items").grid.toggle_display("accounting_dimensions_section", false);
+//   }
+// }

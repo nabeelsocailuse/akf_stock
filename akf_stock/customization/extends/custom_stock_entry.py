@@ -342,12 +342,12 @@ class XStockEntry(StockEntry):
                     (
                         f" and inventory_flag = '{item.inventory_flag}' "
                         if item.inventory_flag
-                        else ""
+                        else "Normal"
                     ),
                     (
                         f" and inventory_scenario = '{item.inventory_scenario}' "
                         if item.inventory_scenario
-                        else ""
+                        else "Normal"
                     ),
                     (
                         f" and program = '{item.program}' "
@@ -405,7 +405,7 @@ class XStockEntry(StockEntry):
         if self.stock_entry_type == "Donated Inventory Receive - Restricted":
             pass
 
-        elif self.stock_entry_type == "Donated Inventory Consumption - Restricted":
+        elif self.stock_entry_type == "Inventory Consumption - Restricted":
             debit_account = company.custom_default_inventory_expense_account
             credit_account = company.default_income_account
 
@@ -443,7 +443,7 @@ class XStockEntry(StockEntry):
             credit_gl.insert()
             credit_gl.submit()
 
-        elif self.stock_entry_type == "Donated Inventory Transfer - Restricted":
+        elif self.stock_entry_type == "Inventory Transfer - Restricted":
 
             source_cost_center, target_cost_center = "", ""
             for item in self.items:
