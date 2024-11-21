@@ -19,15 +19,19 @@ frappe.ui.form.on("Stock Entry", {
   onload: function (frm) {
     frm.original_qty_values = {};
     frm.doc.items.forEach(function (item) {
-      frm.original_qty_values[item.name] = item.qty;
+      if (item.material_request) {
+        frm.original_qty_values[item.name] = item.qty;
+      }
     });
   },
   validate: function (frm) {
     frm.doc.items.forEach(function (item) {
-      var original_qty = frm.original_qty_values[item.name];
+      if (item.material_request) {
+        var original_qty = frm.original_qty_values[item.name];
 
-      if (item.qty > original_qty) {
-        frappe.throw(`The quantity for item ${item.item_code} cannot exceed ${original_qty}`);
+        if (item.qty > original_qty) {
+          frappe.throw(`The quantity for item ${item.item_code} cannot exceed ${original_qty}`);
+        }
       }
     });
   },

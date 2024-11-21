@@ -192,6 +192,10 @@ class XStockEntry(StockEntry):
             )
 
     def update_stock_ledger_entry(self):
+        source_cost_center, target_cost_center = "", ""
+        # for item in self.items:
+            
+
         for row in self.items:
             if frappe.db.exists(
                 "Stock Ledger Entry",
@@ -200,15 +204,62 @@ class XStockEntry(StockEntry):
                     "voucher_no": self.name,
                 },
             ):
-                frappe.db.sql(
+                if self.purpose == "Material Receipt":
+                    target_warehouse = row.t_warehouse
+                    target_cost_center = frappe.db.get_value(
+                        "Warehouse", target_warehouse, "custom_cost_center"
+                    )
+                    frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{row.cost_center}', custom_department='{self.custom_department}'
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
                         WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
                     """
                 )
+                elif self.purpose == "Material Issue":
+                    source_warehouse = row.s_warehouse
+                    source_cost_center = frappe.db.get_value(
+                        "Warehouse", source_warehouse, "custom_cost_center"
+                    )
+                    frappe.db.sql(
+                    f""" 
+                        UPDATE `tabStock Ledger Entry`
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
+                        WHERE docstatus=1 
+                            and voucher_detail_no = '{row.name}'
+                            and voucher_no = '{self.name}'
+                    """)
+                elif self.purpose == "Material Transfer":
+                    source_warehouse = row.s_warehouse
+                    source_cost_center = frappe.db.get_value(
+                        "Warehouse", source_warehouse, "custom_cost_center"
+                    )
+                    frappe.db.sql(
+                    f""" 
+                        UPDATE `tabStock Ledger Entry`
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
+                        WHERE docstatus=1 
+                            and voucher_detail_no = '{row.name}'
+                            and voucher_no = '{self.name}'
+                            and warehouse= '{row.s_warehouse}'
+                    """)
+
+                    target_warehouse = row.t_warehouse
+                    target_cost_center = frappe.db.get_value(
+                        "Warehouse", target_warehouse, "custom_cost_center"
+                    )
+                    frappe.db.sql(
+                    f""" 
+                        UPDATE `tabStock Ledger Entry`
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
+                        WHERE docstatus=1 
+                            and voucher_detail_no = '{row.name}'
+                            and voucher_no = '{self.name}'
+                            and warehouse= '{row.t_warehouse}'
+                    """)
+                
 
         if self.custom_donor_ids:
             # Initialize an empty list to store child values
@@ -380,6 +431,7 @@ class XStockEntry(StockEntry):
                             item_code='{item.item_code}'
                             {f'{condition}' if condition else ''}
                     """
+                # frappe.throw(f"query: {query}")
                 
                 try:
                     donated_invetory = frappe.db.sql(
