@@ -40,7 +40,7 @@ frappe.ui.form.on("Stock Entry", {
     set_inventory_flag(frm);
     // unhide_dimensions(frm);
 
-    if (frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted" || frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted" || frm.doc.stock_entry_type == "Inventory Consumption - Restricted" || frm.doc.stock_entry_type == "Inventory Transfer - Restricted") {
+    if (frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted" || frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted") {
       (frm.doc.items || []).forEach((item) => {
         frappe.model.set_value(
           "Stock Entry Detail",
@@ -150,7 +150,7 @@ function set_queries(frm) {
 }
 
 function set_inventory_flag(frm) {
-  if ((frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted" || frm.doc.stock_entry_type == "Inventory Consumption - Restricted" || frm.doc.stock_entry_type == "Inventory Transfer - Restricted")) {
+  if ((frm.doc.stock_entry_type == "Donated Inventory Receive - Restricted") || (frm.doc.stock_entry_type == "Donated Inventory Disposal - Restricted")) {
     (frm.doc.items || []).forEach((item) => {
       frappe.model.set_value(
         "Stock Entry Detail",
