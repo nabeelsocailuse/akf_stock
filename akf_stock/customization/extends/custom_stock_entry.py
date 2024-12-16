@@ -771,6 +771,7 @@ class XStockEntry(StockEntry):
     def set_warehouse_cost_centers(self):
         for item in self.items:
             source_cost_center, target_cost_center = "", ""
+            self.project = item.project
             if self.purpose == "Material Receipt":
                 target_warehouse = item.t_warehouse
                 target_cost_center = frappe.db.get_value(
