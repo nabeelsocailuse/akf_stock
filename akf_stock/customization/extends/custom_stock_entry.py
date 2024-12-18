@@ -514,6 +514,13 @@ class XStockEntry(StockEntry):
 
             if not debit_account or not credit_account:
                 frappe.throw("Required accounts not found in the company")
+
+            for item in self.items:
+                # cost_center = item.cost_center
+                service_area = item.to_program
+                subservice_area = item.to_subservice_area
+                product = item.to_product
+                project = item.custom_target_project
             # Create the GL entry for the debit account and update
             debit_entry = self.get_gl_entry_dict()
             debit_entry.update(
@@ -524,6 +531,11 @@ class XStockEntry(StockEntry):
                     "credit": 0,
                     "debit_in_account_currency": self.total_incoming_value,
                     "credit_in_account_currency": 0,
+                    "program": service_area,
+                    "subservice_area": subservice_area,
+                    "product": product,
+                    "project": project,
+
                 }
             )
             debit_gl = frappe.get_doc(debit_entry)
@@ -540,6 +552,10 @@ class XStockEntry(StockEntry):
                     "credit": self.total_incoming_value,
                     "debit_in_account_currency": 0,
                     "credit_in_account_currency": self.total_incoming_value,
+                    "program": service_area,
+                    "subservice_area": subservice_area,
+                    "product": product,
+                    "project": project,
                 }
             )
             credit_gl = frappe.get_doc(credit_entry)
