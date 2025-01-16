@@ -14,7 +14,7 @@ def get_data():
 				"label": _("Reference"),
 				"items": ["Sales Order", "Request for Quotation", "Supplier Quotation", "Purchase Order"],
 			},
-			{"label": _("Stock"), "items": ["Stock Entry", "Purchase Receipt", "Pick List"]},
+			{"label": _("Stock"), "items": ["Purchase Receipt", "Pick List"]}, #"Stock Entry",  removed on request of Mobeen
 			{"label": _("Manufacturing"), "items": ["Work Order"]},
 			{"label": _("Internal Transfer"), "items": ["Sales Order"]},
 			{"label": _("Accounting Dimensions"), "items": ["Project", "Cost Center"]},
