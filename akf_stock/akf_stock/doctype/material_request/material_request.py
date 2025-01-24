@@ -119,6 +119,7 @@ class MaterialRequest(BuyingController):
 		self.check_for_on_hold_or_closed_status("Sales Order", "sales_order")
 		self.validate_uom_is_integer("uom", "qty")
 		self.validate_material_request_type()
+		self.set_requester() #mubarim
 
 		if not self.status:
 			self.status = "Draft"
@@ -153,6 +154,8 @@ class MaterialRequest(BuyingController):
 
 
 		# self.stop_exceeding_qty() # By Nabeel Saleem
+	def set_requester(self):
+		self.custom_requested_byemployee_id = frappe.session.user
 
 	def before_update_after_submit(self):
 		self.validate_schedule_date()
