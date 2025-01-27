@@ -15,7 +15,12 @@ class XStockEntry(StockEntry):
         self.validate_difference_account()
         self.set_warehouse_cost_centers()
         self.set_total_quantity_count()
-
+        self.set_actual_quantity_before_submission()
+        
+    def set_actual_quantity_before_submission(self):
+            for item in self.items:
+                    item.custom_actual_quantity = item.actual_qty
+                    
     def on_submit(self):
         super(XStockEntry, self).on_submit()
         self.calculate_per_installed_for_delivery_note()
@@ -23,6 +28,22 @@ class XStockEntry(StockEntry):
         self.update_stock_ledger_entry()
         self.create_gl_entries_for_stock_entry()
         self.set_total_quantity_count()
+
+        if self.stock_entry_type == "Inventory to Asset":
+            self.make_asset_item()
+
+    def make_asset_item(self):
+        for item in self.items:
+            asset_item = item.item_name
+            asset_item_qty = item.qty
+            asset_item_rate = item.basic_rate
+            custom_against_stock_entry = self.name
+            asset_item_group = item.item_group
+            asset_item_category = item.item_group
+
+            doc = frappe.get_doc("Item", "{item.item_name}")
+            
+
 
 
     def calculate_per_installed_for_delivery_note(self):
