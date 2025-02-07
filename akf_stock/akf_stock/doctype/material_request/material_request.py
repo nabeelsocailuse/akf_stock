@@ -155,7 +155,8 @@ class MaterialRequest(BuyingController):
 
 		# self.stop_exceeding_qty() # By Nabeel Saleem
 	def set_requester(self):
-		self.custom_requested_byemployee_id = frappe.session.user
+		if(frappe.session.user != "husnain.rasheed@alkhidmat.org"):
+			self.custom_requested_byemployee_id = frappe.session.user
 
 	def before_update_after_submit(self):
 		self.validate_schedule_date()
