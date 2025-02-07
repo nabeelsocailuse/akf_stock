@@ -80,6 +80,11 @@ frappe.ui.form.on('Material Request', {
 	},
 
 	refresh: function (frm) {
+		if (frappe.session.user === "husnain.rasheed@alkhidmat.org") {
+			frm.set_df_property("custom_requested_byemployee_id", "read_only", 0)
+		} else {
+			frm.set_df_property("custom_requested_byemployee_id", "read_only", 1)
+		}
 		frm.events.make_custom_buttons(frm);
 		frm.toggle_reqd('customer', frm.doc.material_request_type == "Customer Provided");
 
