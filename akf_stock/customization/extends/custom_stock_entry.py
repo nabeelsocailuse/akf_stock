@@ -29,8 +29,7 @@ class XStockEntry(StockEntry):
         self.create_gl_entries_for_stock_entry()
         self.set_total_quantity_count()
 
-        asset_item = self.create_asset_item_and_asset()
-        frappe.msgprint(f"{asset_item}")
+        self.create_asset_item_and_asset()
     
 
     def create_asset_item_and_asset(self):
