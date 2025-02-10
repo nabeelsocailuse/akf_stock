@@ -16,7 +16,7 @@ class XStockEntry(StockEntry):
         self.set_warehouse_cost_centers()
         self.set_total_quantity_count()
         self.set_actual_quantity_before_submission()
-        
+
     def set_actual_quantity_before_submission(self):
             for item in self.items:
                     item.custom_actual_quantity = item.actual_qty
@@ -29,21 +29,72 @@ class XStockEntry(StockEntry):
         self.create_gl_entries_for_stock_entry()
         self.set_total_quantity_count()
 
-        if self.stock_entry_type == "Inventory to Asset":
-            self.make_asset_item()
+        asset_item = self.create_asset_item_and_asset()
+        frappe.msgprint(f"{asset_item}")
+    
 
-    def make_asset_item(self):
-        for item in self.items:
-            asset_item = item.item_name
-            asset_item_qty = item.qty
-            asset_item_rate = item.basic_rate
-            custom_against_stock_entry = self.name
-            asset_item_group = item.item_group
-            asset_item_category = item.item_group
+    def create_asset_item_and_asset(self):
+        stock_entry = frappe.get_doc("Stock Entry", self.name)
 
-            doc = frappe.get_doc("Item", "{item.item_name}")
-            
+        if stock_entry.stock_entry_type != "Inventory to Asset":
+            return
 
+        created_assets = []
+
+        for item in stock_entry.items:
+            item_code = item.item_code
+            item_name = item.item_name            
+            asset_item_code = frappe.db.exists("Item", {"item_name":f"Asset-{item_name}"})
+            asset_category = frappe.db.exists("Asset Category", item.item_group)
+
+            if not asset_category:
+                asset_category = frappe.get_doc({
+                    "doctype": "Asset Category",
+                    "asset_category_name": item.item_group,
+                    "accounts": 
+                        [{
+                            "company_name": stock_entry.company,
+                            "fixed_asset_account": "Capital Equipments - AKFP"
+                        }]
+                    })
+                asset_category.insert()
+                frappe.db.commit()
+
+            if not asset_item_code:
+                asset_item_doc = frappe.get_doc({
+                    "doctype": "Item",
+                    "item_code": f"Asset-{item_name}",
+                    "item_name": f"Asset-{item_name}",
+                    "item_group": asset_category, 
+                    "stock_uom": item.uom,
+                    "is_stock_item": 0,
+                    "is_fixed_asset": 1, 
+                    "asset_category": asset_category,  
+                })
+                
+                asset_item_doc.insert()
+                frappe.db.commit()
+                asset_item_code = asset_item_doc.name
+                
+
+            asset = frappe.get_doc({
+                "doctype": "Asset",
+                "item_code": asset_item_code,
+                "company": stock_entry.company,
+                "location": item.custom_asset_location,
+                "custom_source_of_asset_acquistion": 'Normal',
+                "available_for_use_date": frappe.utils.nowdate(),
+                "gross_purchase_amount": item.basic_rate,
+                "asset_quantity": item.qty,
+                "is_existing_asset": 1
+            })
+            asset.insert()
+            frappe.db.commit()
+            created_assets.append(item_code)
+
+        if created_assets:
+            return f"Assets created for items: {', '.join(created_assets)}"
+        return "No new assets created."
 
 
     def calculate_per_installed_for_delivery_note(self):
@@ -877,4 +928,3 @@ def make_stock_in_lost_entry(source_name, target_doc=None):
 	)
 
 	return doclist
-
