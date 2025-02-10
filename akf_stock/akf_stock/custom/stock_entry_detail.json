@@ -12,7 +12,7 @@
    "collapsible_depends_on": null,
    "columns": 0,
    "creation": "2025-02-10 06:58:33.903460",
-   "default": null,
+   "default": "Default",
    "depends_on": "eval: parent.stock_entry_type == \"Inventory to Asset\"",
    "description": null,
    "docstatus": 0,
