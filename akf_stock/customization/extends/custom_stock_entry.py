@@ -44,7 +44,7 @@ class XStockEntry(StockEntry):
             item_code = item.item_code
             item_name = item.item_name            
             asset_item_code = frappe.db.exists("Item", {"item_name":f"Asset-{item_name}"})
-            asset_category = frappe.db.exists("Asset Category", item.item_group)
+            asset_category = frappe.db.exists("Asset Category", {"asset_category_name": item.item_group})
 
             if not asset_category:
                 asset_category = frappe.get_doc({
