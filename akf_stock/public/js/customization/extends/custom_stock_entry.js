@@ -142,7 +142,7 @@ function set_queries(frm) {
     let row = locals[cdt][cdn];
     return {
       filters: {
-        custom_program: row.service_area,
+        custom_service_area: row.service_area,
       },
     };
   };
