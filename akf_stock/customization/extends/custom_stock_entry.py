@@ -283,7 +283,7 @@ class XStockEntry(StockEntry):
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
                         WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -297,7 +297,7 @@ class XStockEntry(StockEntry):
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
                         WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -310,7 +310,7 @@ class XStockEntry(StockEntry):
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
                         WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -324,7 +324,7 @@ class XStockEntry(StockEntry):
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_program}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
+                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
                         WHERE docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
@@ -588,7 +588,7 @@ class XStockEntry(StockEntry):
 
             for item in self.items:
                 # cost_center = item.cost_center
-                service_area = item.to_program
+                service_area = item.to_service_area
                 subservice_area = item.to_subservice_area
                 product = item.to_product
                 project = item.custom_target_project
