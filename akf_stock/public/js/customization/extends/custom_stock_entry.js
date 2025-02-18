@@ -81,9 +81,9 @@ frappe.ui.form.on("Stock Entry Detail", {
     frm.refresh_field("items")
     set_queries(frm);
   },
-  program: function (frm, cdt, cdn) {
+  service_area: function (frm, cdt, cdn) {
     let row = locals[cdt][cdn];
-    if (row.program) {
+    if (row.service_area) {
       row.subservice_area = "";
       row.product = "";
       row.project = "";
@@ -93,7 +93,7 @@ frappe.ui.form.on("Stock Entry Detail", {
   },
   subservice_area: function (frm, cdt, cdn) {
     let row = locals[cdt][cdn];
-    if (row.program) {
+    if (row.service_area) {
       row.product = "";
       row.project = "";
     }
@@ -102,7 +102,7 @@ frappe.ui.form.on("Stock Entry Detail", {
   },
   product: function (frm, cdt, cdn) {
     let row = locals[cdt][cdn];
-    if (row.program) {
+    if (row.service_area) {
       row.project = "";
     }
     frm.refresh_field("items")
@@ -116,7 +116,7 @@ function set_queries(frm) {
       let row = locals[cdt][cdn];
       return {
         filters: {
-          service_area: row.program,
+          service_area: row.service_area,
         },
       };
     };
@@ -142,7 +142,7 @@ function set_queries(frm) {
     let row = locals[cdt][cdn];
     return {
       filters: {
-        custom_program: row.program,
+        custom_program: row.service_area,
       },
     };
   };

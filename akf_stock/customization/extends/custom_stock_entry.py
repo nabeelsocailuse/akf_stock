@@ -472,9 +472,9 @@ class XStockEntry(StockEntry):
                         else "Normal"
                     ),
                     (
-                        f" and program = '{item.program}' "
-                        if item.program
-                        else " and program IS NULL "
+                        f" and service_area = '{item.service_area}' "
+                        if item.service_area
+                        else " and service_area IS NULL "
                     ),
                     (
                         f" and subservice_area = '{item.subservice_area}' "
@@ -602,7 +602,7 @@ class XStockEntry(StockEntry):
                     "credit": 0,
                     "debit_in_account_currency": self.total_incoming_value,
                     "credit_in_account_currency": 0,
-                    "program": service_area,
+                    "service_area": service_area,
                     "subservice_area": subservice_area,
                     "product": product,
                     "project": project,
@@ -623,7 +623,7 @@ class XStockEntry(StockEntry):
                     "credit": self.total_incoming_value,
                     "debit_in_account_currency": 0,
                     "credit_in_account_currency": self.total_incoming_value,
-                    "program": service_area,
+                    "service_area": service_area,
                     "subservice_area": subservice_area,
                     "product": product,
                     "project": project,
@@ -825,7 +825,7 @@ class XStockEntry(StockEntry):
 
         for item in self.items:
             cost_center = item.cost_center
-            service_area = item.program
+            service_area = item.service_area
             subservice_area = item.subservice_area
             product = item.product
             project = item.project
@@ -845,7 +845,7 @@ class XStockEntry(StockEntry):
                 "voucher_no": self.name,
                 "company": self.company,
                 "cost_center": cost_center,
-                "program": service_area,
+                "service_area": service_area,
                 "subservice_area": subservice_area,
                 "product": product,
                 "project": project,
