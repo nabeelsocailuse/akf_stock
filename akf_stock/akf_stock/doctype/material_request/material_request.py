@@ -21,6 +21,12 @@ from erpnext.stock.stock_balance import get_indented_qty, update_bin_qty
 
 form_grid_templates = {"items": "templates/form_grid/material_request_grid.html"}
 
+# Nabeel Saleem, 18-02-2025
+from akf_stock.akf_stock.doctype.material_request.add_ons import (
+    validate_donor_balance,
+    make_temporary_equity_gl_entry,
+    cancel_gl_entry
+    )
 
 class MaterialRequest(BuyingController):
 	# begin: auto-generated types
@@ -151,7 +157,15 @@ class MaterialRequest(BuyingController):
 
 		self.reset_default_field_value("set_warehouse", "items", "warehouse")
 		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
-
+		# Nabeel Saleem, 18-02-2025
+		validate_donor_balance(self)
+		self.soft_hard_financial_closure() #mubarrim
+		
+	def soft_hard_financial_closure(self): #By Mubarrim
+		for row in self.program_details:
+			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
+			if(financial_status in ["Soft","Hard"]):
+				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
 
 		# self.stop_exceeding_qty() # By Nabeel Saleem
 	def set_requester(self):
@@ -180,6 +194,7 @@ class MaterialRequest(BuyingController):
 			"Budget", {"applicable_on_material_request": 1, "docstatus": 1}
 		):
 			self.validate_budget()
+		make_temporary_equity_gl_entry(self)
 
 	def before_save(self):
 		self.set_status(update=True)
@@ -192,6 +207,7 @@ class MaterialRequest(BuyingController):
 		check_on_hold_or_closed_status(self.doctype, self.name)
 
 		self.set_status(update=True, status="Cancelled")
+		cancel_gl_entry(self)
 
 	def check_modified_date(self):
 		mod_db = frappe.db.sql(
@@ -539,6 +555,9 @@ def make_purchase_receipt(source_name, target_doc=None, args=None):
 				"postprocess": update_item,
 				"condition": select_item,
 			},
+			"Program Details":{
+				"doctype": "Program Details",
+			}
 		},
 		target_doc,
 		postprocess,
