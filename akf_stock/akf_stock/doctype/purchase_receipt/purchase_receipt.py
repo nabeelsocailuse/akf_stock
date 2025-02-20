@@ -258,7 +258,19 @@ class PurchaseReceipt(BuyingController):
 		# frappe.msgprint(frappe.as_json(party_balance))
 
 		self.set_warehouse_cost_centers() #custom funcioncalled
+		self.soft_hard_financial_closure() #mubarrim
 		
+	def soft_hard_financial_closure(self): #By Mubarrim
+		for row in self.custom_program_details:
+			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
+			if(financial_status in ["Soft","Hard"]):
+				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
+
+		for row in self.items:
+			if row.project:
+				financial_status=frappe.db.get_value("Project",row.project,"custom_financial_close")
+				if(financial_status in ["Soft","Hard"]):
+					frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.project}")
 
 	def validate_cwip_accounts(self):
 		for item in self.get("items"):
