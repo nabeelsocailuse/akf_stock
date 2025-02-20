@@ -15,8 +15,11 @@
   "column_break_2",
   "transaction_date",
   "company",
+  "cost_center",
   "schedule_date",
   "amended_from",
+  "section_break_mhgs",
+  "program_details",
   "warehouse_section",
   "scan_barcode",
   "column_break_13",
@@ -352,13 +355,38 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "section_break_mhgs",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Cost Center",
+   "oldfieldname": "company",
+   "oldfieldtype": "Link",
+   "options": "Cost Center",
+   "print_hide": 1,
+   "print_width": "150px",
+   "reqd": 1,
+   "search_index": 1,
+   "width": "150px"
+  },
+  {
+   "depends_on": "cost_center",
+   "fieldname": "program_details",
+   "fieldtype": "Table",
+   "label": "Donor Balance",
+   "options": "Program Details"
   }
  ],
  "icon": "fa fa-ticket",
  "idx": 70,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-25 12:26:35.773134",
+ "modified": "2025-02-20 14:36:06.020843",
  "modified_by": "Administrator",
  "module": "AKF Stock",
  "name": "Material Request",

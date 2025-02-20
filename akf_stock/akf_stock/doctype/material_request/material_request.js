@@ -67,7 +67,6 @@ frappe.ui.form.on('Material Request', {
 				filters: { 'company': doc.company }
 			};
 		});
-
 		erpnext.accounts.dimensions.setup_dimension_filters(frm, frm.doctype);
 	},
 
@@ -93,6 +92,14 @@ frappe.ui.form.on('Material Request', {
 		frm.events.delivery_note_in_transit(frm);
 		// frm.toggle_reqd('customer', frm.doc.material_request_type=="Customer Provided");
 		// END Here by Nabeel Saleem
+		frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
+			if (typeof make_dimensions_modal === "function") {
+                make_dimensions_modal(frm);
+            } else {
+                frappe.msgprint("Donation modal is not loaded.");
+            }
+			
+		})
 
 	},
 
