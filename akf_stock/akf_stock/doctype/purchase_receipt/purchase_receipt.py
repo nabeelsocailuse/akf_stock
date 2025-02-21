@@ -266,11 +266,11 @@ class PurchaseReceipt(BuyingController):
 			if(financial_status in ["Soft","Hard"]):
 				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
 
-		for row in self.items:
-			if row.project:
-				financial_status=frappe.db.get_value("Project",row.project,"custom_financial_close")
+		for item in self.items:
+			if item.project:
+				financial_status=frappe.db.get_value("Project",item.project,"custom_financial_close")
 				if(financial_status in ["Soft","Hard"]):
-					frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.project}")
+					frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {item.project}")
 
 	def validate_cwip_accounts(self):
 		for item in self.get("items"):

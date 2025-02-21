@@ -16,6 +16,7 @@ class XStockEntry(StockEntry):
         self.set_warehouse_cost_centers()
         self.set_total_quantity_count()
         self.set_actual_quantity_before_submission()
+        self.stock_between_third_party_warehouse() #Mubarrim
 
     def set_actual_quantity_before_submission(self):
             for item in self.items:
@@ -29,7 +30,22 @@ class XStockEntry(StockEntry):
         self.create_gl_entries_for_stock_entry()
         self.set_total_quantity_count()
 
-        self.create_asset_item_and_asset()
+        self.create_asset_item_and_asset() #Mubarrim
+
+    def stock_between_third_party_warehouse(self): #Mubarrim
+        if(self.purpose == "Material Transfer"):
+            for item in self.items:
+                if(item.custom_source_warehouse_tpt or item.custom_target_warehouse_tpt):
+                    frappe.throw("Not allowed for Third Party Warehouse")
+
+    
+    def make_gl_entries(self, gl_entries=None, from_repost=False): #Mubarrim
+        for item in self.items:
+            if item.custom_source_warehouse_tpt == "For Third Party" or item.custom_target_warehouse_tpt == "For Third Party":
+                # frappe.msgprint("GL Entry skipped for this Stock Entry as it contains Third Party Warehouse.")
+                return  # Skip GL Entry creation
+    
+        super().make_gl_entries(gl_entries, from_repost)
     
 
     def create_asset_item_and_asset(self):
@@ -53,7 +69,7 @@ class XStockEntry(StockEntry):
                     "accounts": 
                         [{
                             "company_name": stock_entry.company,
-                            "fixed_asset_account": "Capital Equipments - AKFP"
+                            "fixed_asset_account": "Capital Equipments - AKFP",
                         }]
                     })
                 asset_category.insert()
@@ -67,8 +83,10 @@ class XStockEntry(StockEntry):
                     "item_group": asset_category, 
                     "stock_uom": item.uom,
                     "is_stock_item": 0,
-                    "is_fixed_asset": 1, 
-                    "asset_category": asset_category,  
+                    "is_fixed_asset": 1,
+                    "asset_category": asset_category,
+                    "custom_source_of_asset_acquistion": item.inventory_flag,
+                    "custom_type_of_asset": item.inventory_scenario
                 })
                 
                 asset_item_doc.insert()
