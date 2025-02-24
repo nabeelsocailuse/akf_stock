@@ -98,8 +98,12 @@ frappe.ui.form.on('Material Request', {
             } else {
                 frappe.msgprint("Donation modal is not loaded.");
             }
+			if ((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) {
+                accounting_ledger(frm);
+				donor_balance_set_queries(frm);
+            } 
 			
-		})
+		});
 
 	},
 

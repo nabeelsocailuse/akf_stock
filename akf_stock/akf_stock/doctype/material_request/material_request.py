@@ -24,7 +24,7 @@ form_grid_templates = {"items": "templates/form_grid/material_request_grid.html"
 # Nabeel Saleem, 18-02-2025
 from akf_stock.akf_stock.doctype.material_request.add_ons import (
     validate_donor_balance,
-    make_temporary_equity_gl_entry,
+    make_funds_gl_entries,
     cancel_gl_entry
     )
 
@@ -194,7 +194,7 @@ class MaterialRequest(BuyingController):
 			"Budget", {"applicable_on_material_request": 1, "docstatus": 1}
 		):
 			self.validate_budget()
-		make_temporary_equity_gl_entry(self)
+		make_funds_gl_entries(self)
 
 	def before_save(self):
 		self.set_status(update=True)

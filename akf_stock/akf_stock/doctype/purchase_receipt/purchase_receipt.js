@@ -64,7 +64,7 @@ frappe.ui.form.on("Purchase Receipt", {
 		});
 	},
 
-	refresh: function(frm) {
+	refresh_: function(frm) {
 		if(frm.doc.company) {
 			frm.trigger("toggle_display_account_head");
 		}
@@ -102,7 +102,7 @@ frappe.ui.form.on("Purchase Receipt", {
 			}
 		}
 
-		frm.events.add_custom_buttons(frm);
+		// frm.events.add_custom_buttons(frm);
 		// Nabeel Saleem, 01-01-2025
 		set_query_donor(frm);
 	},

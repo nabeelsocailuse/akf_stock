@@ -261,7 +261,7 @@ class PurchaseReceipt(BuyingController):
 		self.soft_hard_financial_closure() #mubarrim
 		
 	def soft_hard_financial_closure(self): #By Mubarrim
-		for row in self.custom_program_details:
+		for row in self.program_details:
 			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
 			if(financial_status in ["Soft","Hard"]):
 				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
@@ -1286,6 +1286,10 @@ def make_purchase_invoice(source_name, target_doc=None, args=None):
 				"add_if_empty": True,
 				"ignore": args.get("merge_taxes") if args else 0,
 			},
+			# Nabeel Saleem 22-02-2025
+			"Program Details": {
+				"doctype": "Program Details",
+			}
 		},
 		target_doc,
 		set_missing_values,

@@ -16,6 +16,13 @@ class XAssetInvenPurchase(PurchaseReceipt):
         self.set_warehouse_cost_centers()
         self.set_dimensions()
         # frappe.msgprint('accounts')
+        self.soft_hard_financial_closure() #mubarrim
+		
+    def soft_hard_financial_closure(self): #By Mubarrim
+        for row in self.custom_program_details:
+            financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
+            if(financial_status in ["Soft","Hard"]):
+                frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
 
     def on_submit(self):
         super().on_submit()
