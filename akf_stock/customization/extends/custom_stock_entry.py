@@ -547,42 +547,45 @@ class XStockEntry(StockEntry):
             pass
 
         elif self.stock_entry_type == "Inventory Consumption - Restricted":
-            debit_account = company.custom_default_inventory_expense_account
-            credit_account = company.default_income_account
+            if item.custom_source_warehouse_tpt == "For Third Party":
+                pass
+            else:
+                debit_account = company.custom_default_inventory_expense_account
+                credit_account = company.default_income_account
 
-            if not debit_account or not credit_account:
-                frappe.throw("Required accounts not found in the company")
+                if not debit_account or not credit_account:
+                    frappe.throw("Required accounts not found in the company")
 
-            # Create the GL entry for the debit account and update
-            debit_entry = self.get_gl_entry_dict()
-            debit_entry.update(
-                {
-                    "account": debit_account,
-                    "debit": self.total_outgoing_value,
-                    "credit": 0,
-                    "debit_in_account_currency": self.total_outgoing_value,
-                    "credit_in_account_currency": 0,
-                }
-            )
-            debit_gl = frappe.get_doc(debit_entry)
-            debit_gl.flags.ignore_permissions = True
-            debit_gl.insert()
-            debit_gl.submit()
+                # Create the GL entry for the debit account and update
+                debit_entry = self.get_gl_entry_dict()
+                debit_entry.update(
+                    {
+                        "account": debit_account,
+                        "debit": self.total_outgoing_value,
+                        "credit": 0,
+                        "debit_in_account_currency": self.total_outgoing_value,
+                        "credit_in_account_currency": 0,
+                    }
+                )
+                debit_gl = frappe.get_doc(debit_entry)
+                debit_gl.flags.ignore_permissions = True
+                debit_gl.insert()
+                debit_gl.submit()
 
-            credit_entry = self.get_gl_entry_dict()
-            credit_entry.update(
-                {
-                    "account": credit_account,
-                    "debit": 0,
-                    "credit": self.total_outgoing_value,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": self.total_outgoing_value,
-                }
-            )
-            credit_gl = frappe.get_doc(credit_entry)
-            credit_gl.flags.ignore_permissions = True
-            credit_gl.insert()
-            credit_gl.submit()
+                credit_entry = self.get_gl_entry_dict()
+                credit_entry.update(
+                    {
+                        "account": credit_account,
+                        "debit": 0,
+                        "credit": self.total_outgoing_value,
+                        "debit_in_account_currency": 0,
+                        "credit_in_account_currency": self.total_outgoing_value,
+                    }
+                )
+                credit_gl = frappe.get_doc(credit_entry)
+                credit_gl.flags.ignore_permissions = True
+                credit_gl.insert()
+                credit_gl.submit()
 
         elif self.stock_entry_type == "Inventory Transfer - Restricted":
 
