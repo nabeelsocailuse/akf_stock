@@ -79,11 +79,11 @@ frappe.ui.form.on('Material Request', {
 	},
 
 	refresh: function (frm) {
-		if (frappe.session.user === "husnain.rasheed@alkhidmat.org") {
-			frm.set_df_property("custom_requested_byemployee_id", "read_only", 0)
-		} else {
-			frm.set_df_property("custom_requested_byemployee_id", "read_only", 1)
-		}
+		// if (frappe.session.user === "husnain.rasheed@alkhidmat.org") {
+		// 	frm.set_df_property("custom_requested_byemployee_id", "read_only", 0)
+		// } else {
+		// 	frm.set_df_property("custom_requested_byemployee_id", "read_only", 1)
+		// }
 		frm.events.make_custom_buttons(frm);
 		frm.toggle_reqd('customer', frm.doc.material_request_type == "Customer Provided");
 
@@ -92,19 +92,8 @@ frappe.ui.form.on('Material Request', {
 		frm.events.delivery_note_in_transit(frm);
 		// frm.toggle_reqd('customer', frm.doc.material_request_type=="Customer Provided");
 		// END Here by Nabeel Saleem
-		frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function() {
-			if (typeof make_dimensions_modal === "function") {
-                make_dimensions_modal(frm);
-            } else {
-                frappe.msgprint("Donation modal is not loaded.");
-            }
-			if ((typeof accounting_ledger === "function") || (typeof donor_balance_set_queries === "function")) {
-                accounting_ledger(frm);
-				donor_balance_set_queries(frm);
-            } 
-			
-		});
 
+		frm.trigger("open_dimension_dialog");
 	},
 
 	set_from_warehouse: function (frm) {
@@ -546,9 +535,30 @@ frappe.ui.form.on('Material Request', {
 			__('In Transit Transfer'),
 			__("Create Delivery Note")
 		)
-	}
+	},
 	// END HERE by Nabeel Saleem //
+	// cost_center: function(frm){
+	// },
 
+	open_dimension_dialog: function (frm) {
+		if (!frm.doc.encumbrance) {
+			frappe.require("/assets/akf_accounts/js/customizations/dimension_dialog.js", function () {
+				if (typeof make_dimensions_modal === "function" && (typeof donor_balance_set_queries === "function")) {
+					if (!frm.doc.__islocal) {
+						make_dimensions_modal(frm);
+						donor_balance_set_queries(frm);
+					}
+				} else {
+					frappe.msgprint("Donation modal is not loaded.");
+				}
+				if ((typeof accounting_ledger === "function")) {
+					if (frm.doc.docstatus == 1) {
+						accounting_ledger(frm);
+					}
+				}
+			});
+		}
+	}
 });
 
 frappe.ui.form.on("Material Request Item", {

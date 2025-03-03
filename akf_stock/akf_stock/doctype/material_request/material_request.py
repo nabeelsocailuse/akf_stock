@@ -22,10 +22,10 @@ from erpnext.stock.stock_balance import get_indented_qty, update_bin_qty
 form_grid_templates = {"items": "templates/form_grid/material_request_grid.html"}
 
 # Nabeel Saleem, 18-02-2025
-from akf_stock.akf_stock.doctype.material_request.add_ons import (
+from akf_accounts.utils.encumbrance.enc_material_request import (
     validate_donor_balance,
-    make_funds_gl_entries,
-    cancel_gl_entry
+    make_encumbrance_material_request_gl_entries,
+    cancel_encumbrance_material_request_gl_entries
     )
 
 class MaterialRequest(BuyingController):
@@ -125,7 +125,7 @@ class MaterialRequest(BuyingController):
 		self.check_for_on_hold_or_closed_status("Sales Order", "sales_order")
 		self.validate_uom_is_integer("uom", "qty")
 		self.validate_material_request_type()
-		self.set_requester() #mubarim
+		# self.set_requester() #mubarim
 
 		if not self.status:
 			self.status = "Draft"
@@ -159,14 +159,7 @@ class MaterialRequest(BuyingController):
 		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
 		# Nabeel Saleem, 18-02-2025
 		validate_donor_balance(self)
-		self.soft_hard_financial_closure() #mubarrim
 		
-	def soft_hard_financial_closure(self): #By Mubarrim
-		for row in self.program_details:
-			financial_status=frappe.db.get_value("Project",row.pd_project,"custom_financial_close")
-			if(financial_status in ["Soft","Hard"]):
-				frappe.throw(f"Not allowed for {financial_status} Financial Closure Project: {row.pd_project}")
-
 		# self.stop_exceeding_qty() # By Nabeel Saleem
 	def set_requester(self):
 		if(frappe.session.user != "husnain.rasheed@alkhidmat.org"):
@@ -194,7 +187,7 @@ class MaterialRequest(BuyingController):
 			"Budget", {"applicable_on_material_request": 1, "docstatus": 1}
 		):
 			self.validate_budget()
-		make_funds_gl_entries(self)
+		make_encumbrance_material_request_gl_entries(self)
 
 	def before_save(self):
 		self.set_status(update=True)
@@ -207,7 +200,7 @@ class MaterialRequest(BuyingController):
 		check_on_hold_or_closed_status(self.doctype, self.name)
 
 		self.set_status(update=True, status="Cancelled")
-		cancel_gl_entry(self)
+		cancel_encumbrance_material_request_gl_entries(self)
 
 	def check_modified_date(self):
 		mod_db = frappe.db.sql(

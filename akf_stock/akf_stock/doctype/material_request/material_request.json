@@ -12,6 +12,8 @@
   "title",
   "material_request_type",
   "customer",
+  "budget",
+  "encumbrance",
   "column_break_2",
   "transaction_date",
   "company",
@@ -380,13 +382,28 @@
    "fieldtype": "Table",
    "label": "Donor Balance",
    "options": "Program Details"
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Budget",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "budget",
+   "fieldname": "encumbrance",
+   "fieldtype": "Check",
+   "label": "Encumbrance",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-ticket",
  "idx": 70,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-20 14:36:06.020843",
+ "modified": "2025-02-27 16:58:16.107408",
  "modified_by": "Administrator",
  "module": "AKF Stock",
  "name": "Material Request",
