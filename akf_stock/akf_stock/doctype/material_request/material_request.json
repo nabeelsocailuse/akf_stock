@@ -81,6 +81,7 @@
    "print_hide": 1
   },
   {
+   "default": "Material Issue",
    "fieldname": "material_request_type",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -131,6 +132,7 @@
   },
   {
    "allow_on_submit": 1,
+   "default": "Today",
    "fieldname": "schedule_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -377,11 +379,12 @@
    "width": "150px"
   },
   {
-   "depends_on": "cost_center",
+   "depends_on": "eval: doc.cost_center!=undefined && !doc.__islocal;",
    "fieldname": "program_details",
    "fieldtype": "Table",
    "label": "Donor Balance",
-   "options": "Program Details"
+   "options": "Program Details",
+   "read_only": 1
   },
   {
    "fieldname": "budget",
@@ -403,7 +406,7 @@
  "idx": 70,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-27 16:58:16.107408",
+ "modified": "2025-03-05 23:24:59.105606",
  "modified_by": "Administrator",
  "module": "AKF Stock",
  "name": "Material Request",
