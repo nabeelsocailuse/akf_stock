@@ -4,6 +4,9 @@ from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt
 
+# Mubarrim, 07-03-2025
+from akf_stock.utils.inventory_to_asset  import create_asset_item_and_asset
+from akf_stock.utils.restricted_inventory import create_restricted_inventory_gl_entries
 
 class XStockEntry(StockEntry):
     def before_validate(self):
@@ -13,31 +16,45 @@ class XStockEntry(StockEntry):
     def validate(self):
         super(XStockEntry, self).validate()
         self.validate_difference_account()
-        self.set_warehouse_cost_centers()
+        # self.set_warehouse_cost_centers()
         self.set_total_quantity_count()
         self.set_actual_quantity_before_submission()
         self.stock_between_third_party_warehouse() #Mubarrim
 
+    def validate_difference_account(self):
+        company = frappe.get_doc("Company", self.company)
+        for d in self.get("items"):
+            d.expense_account = company.custom_default_inventory_fund_account
+    
+    def set_warehouse_cost_centers(self):
+        for row in self.items:
+            self.project = row.project
+            if (self.purpose == "Material Receipt"):
+                row.cost_center = frappe.db.get_value("Warehouse", row.t_warehouse, "custom_cost_center")
+            elif (self.purpose == "Material Issue" or self.purpose == "Material Transfer"):
+                row.cost_center = frappe.db.get_value("Warehouse", row.s_warehouse, "custom_cost_center")
+    
+    def set_total_quantity_count(self):
+        self.custom_total_quantity_count = sum([item.qty for item in self.get("items")])
+            
     def set_actual_quantity_before_submission(self):
             for item in self.items:
-                    item.custom_actual_quantity = item.actual_qty
-                    
-    def on_submit(self):
-        super(XStockEntry, self).on_submit()
-        self.calculate_per_installed_for_delivery_note()
-        self.set_material_request_status_per_outgoing_stock_entry()
-        self.update_stock_ledger_entry()
-        self.create_gl_entries_for_stock_entry()
-        self.set_total_quantity_count()
-
-        self.create_asset_item_and_asset() #Mubarrim
-
+                item.custom_actual_quantity = item.actual_qty
+    
     def stock_between_third_party_warehouse(self): #Mubarrim
         if(self.purpose == "Material Transfer"):
             for item in self.items:
                 if(item.custom_source_warehouse_tpt or item.custom_target_warehouse_tpt):
                     frappe.throw("Not allowed for Third Party Warehouse")
+                           
+    def on_submit(self):
+        super(XStockEntry, self).on_submit()
+        self.calculate_per_installed_for_delivery_note()
+        self.set_material_request_status_per_outgoing_stock_entry()
+        self.update_stock_ledger_entry()
+        create_restricted_inventory_gl_entries(self)
 
+        create_asset_item_and_asset(self) #Mubarrim
     
     def make_gl_entries(self, gl_entries=None, from_repost=False): #Mubarrim
         for item in self.items:
@@ -47,75 +64,8 @@ class XStockEntry(StockEntry):
     
         super().make_gl_entries(gl_entries, from_repost)
     
-
-    def create_asset_item_and_asset(self):
-        stock_entry = frappe.get_doc("Stock Entry", self.name)
-
-        if stock_entry.stock_entry_type != "Inventory to Asset":
-            return
-
-        created_assets = []
-
-        for item in stock_entry.items:
-            item_code = item.item_code
-            item_name = item.item_name            
-            asset_item_code = frappe.db.exists("Item", {"item_name":f"Asset-{item_name}"})
-            asset_category = frappe.db.exists("Asset Category", {"asset_category_name": item.item_group})
-
-            if not asset_category:
-                asset_category = frappe.get_doc({
-                    "doctype": "Asset Category",
-                    "asset_category_name": item.item_group,
-                    "accounts": 
-                        [{
-                            "company_name": stock_entry.company,
-                            "fixed_asset_account": "Capital Equipments - AKFP",
-                        }]
-                    })
-                asset_category.insert()
-                frappe.db.commit()
-
-            if not asset_item_code:
-                asset_item_doc = frappe.get_doc({
-                    "doctype": "Item",
-                    "item_code": f"Asset-{item_name}",
-                    "item_name": f"Asset-{item_name}",
-                    "item_group": asset_category, 
-                    "stock_uom": item.uom,
-                    "is_stock_item": 0,
-                    "is_fixed_asset": 1,
-                    "asset_category": asset_category,
-                    "custom_source_of_asset_acquistion": item.inventory_flag,
-                    "custom_type_of_asset": item.inventory_scenario
-                })
-                
-                asset_item_doc.insert()
-                frappe.db.commit()
-                asset_item_code = asset_item_doc.name
-                
-
-            asset = frappe.get_doc({
-                "doctype": "Asset",
-                "item_code": asset_item_code,
-                "company": stock_entry.company,
-                "location": item.custom_asset_location,
-                "custom_source_of_asset_acquistion": 'Normal',
-                "available_for_use_date": frappe.utils.nowdate(),
-                "gross_purchase_amount": item.basic_rate,
-                "asset_quantity": item.qty,
-                "is_existing_asset": 1
-            })
-            asset.insert()
-            frappe.db.commit()
-            created_assets.append(item_code)
-
-        if created_assets:
-            return f"Assets created for items: {', '.join(created_assets)}"
-        return "No new assets created."
-
-
     def calculate_per_installed_for_delivery_note(self):
-        if not self.custom_delivery_note:
+        if (not self.custom_delivery_note):
             return
         total_received_qty = 0.0
         total_actual_qty = 0.0
@@ -168,7 +118,7 @@ class XStockEntry(StockEntry):
             else 0.0
         )
 
-        if self.stock_entry_type == "Material Transfer":
+        if (self.stock_entry_type == "Material Transfer"):
             frappe.db.sql(
                 f""" 
                 update `tabDelivery Note`
@@ -176,7 +126,7 @@ class XStockEntry(StockEntry):
                 where name = '{self.custom_delivery_note}'
             """
             )
-        elif self.stock_entry_type == "Lost / Wastage":
+        elif (self.stock_entry_type == "Lost / Wastage"):
             frappe.db.set_value(
                 "Delivery Note",
                 self.custom_delivery_note,
@@ -231,7 +181,7 @@ class XStockEntry(StockEntry):
             )
 
     def set_material_request_status_per_outgoing_stock_entry(self):
-        if not self.outgoing_stock_entry:
+        if (not self.outgoing_stock_entry):
             return
         actual_qty = 0.0
         received_qty = 0.0
@@ -245,7 +195,7 @@ class XStockEntry(StockEntry):
                         and voucher_no = '{self.outgoing_stock_entry}' """
             )
 
-            if _actual_qty:
+            if (_actual_qty):
                 actual_qty += _actual_qty[0][0]
 
             _received_qty = frappe.db.sql(
@@ -262,13 +212,13 @@ class XStockEntry(StockEntry):
                 """
             )
 
-            if _received_qty:
+            if (_received_qty):
                 _received_qty = _received_qty[0][0]
                 received_qty += (
                     (-1 * _received_qty) if (_received_qty < 0) else _received_qty
                 )
 
-        if actual_qty > 0:
+        if (actual_qty > 0):
             per_ordered = (received_qty / actual_qty) * 100.0
             status = "Completed" if (per_ordered == 100) else "In Transit"
             frappe.db.sql(
@@ -282,112 +232,122 @@ class XStockEntry(StockEntry):
 
     def update_stock_ledger_entry(self):
         source_cost_center, target_cost_center = "", ""
-        # for item in self.items:
-            
-
         for row in self.items:
-            if frappe.db.exists(
-                "Stock Ledger Entry",
-                {
-                    "docstatus": 1,
-                    "voucher_no": self.name,
-                },
-            ):
-                if self.purpose == "Material Receipt":
-                    target_warehouse = row.t_warehouse
-                    target_cost_center = frappe.db.get_value(
-                        "Warehouse", target_warehouse, "custom_cost_center"
-                    )
+            if frappe.db.exists("Stock Ledger Entry",{ "docstatus": 1,"voucher_no": self.name,}):
+                if (self.purpose == "Material Receipt"):
+                    target_cost_center = frappe.db.get_value("Warehouse", row.t_warehouse, "custom_cost_center")
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
-                        WHERE docstatus=1 
+                        SET 
+                            custom_new = {row.custom_new}, 
+                            custom_used = {row.custom_used}, 
+                            custom_target_service_area='{row.to_service_area}', 
+                            custom_target_subservice_area='{row.to_subservice_area}', 
+                            custom_target_product='{row.to_product}', 
+                            custom_target_project='{row.custom_target_project}', 
+                            inventory_flag='{row.inventory_flag}', 
+                            inventory_scenario='{row.inventory_scenario}', 
+                            custom_cost_center='{target_cost_center}', 
+                            custom_department='{self.custom_department}'
+                        WHERE 
+                            docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
                     """
                 )
-                elif self.purpose == "Material Issue":
-                    source_warehouse = row.s_warehouse
-                    source_cost_center = frappe.db.get_value(
-                        "Warehouse", source_warehouse, "custom_cost_center"
-                    )
+                elif (self.purpose == "Material Issue"):
+                    source_cost_center = frappe.db.get_value("Warehouse", row.s_warehouse, "custom_cost_center")
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
-                        WHERE docstatus=1 
+                        SET 
+                            custom_new = {row.custom_new}, 
+                            custom_used = {row.custom_used}, 
+                            custom_target_service_area='{row.to_service_area}', 
+                            custom_target_subservice_area='{row.to_subservice_area}', 
+                            custom_target_product='{row.to_product}', 
+                            custom_target_project='{row.custom_target_project}', 
+                            inventory_flag='{row.inventory_flag}', 
+                            inventory_scenario='{row.inventory_scenario}', 
+                            custom_cost_center='{source_cost_center}', 
+                            custom_department='{self.custom_department}'
+                        WHERE 
+                            docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
                     """)
-                elif self.purpose == "Material Transfer":
-                    source_warehouse = row.s_warehouse
-                    source_cost_center = frappe.db.get_value(
-                        "Warehouse", source_warehouse, "custom_cost_center"
-                    )
+                elif (self.purpose == "Material Transfer"):
+                    source_cost_center = frappe.db.get_value("Warehouse", row.s_warehouse, "custom_cost_center")
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{source_cost_center}', custom_department='{self.custom_department}'
-                        WHERE docstatus=1 
+                        SET 
+                            custom_new = {row.custom_new}, 
+                            custom_used = {row.custom_used}, 
+                            custom_target_service_area='{row.to_service_area}', 
+                            custom_target_subservice_area='{row.to_subservice_area}', 
+                            custom_target_product='{row.to_product}', 
+                            custom_target_project='{row.custom_target_project}', 
+                            inventory_flag='{row.inventory_flag}', 
+                            inventory_scenario='{row.inventory_scenario}', 
+                            custom_cost_center='{source_cost_center}', 
+                            custom_department='{self.custom_department}'
+                        WHERE 
+                            docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
                             and warehouse= '{row.s_warehouse}'
                     """)
-
-                    target_warehouse = row.t_warehouse
+                    
                     target_cost_center = frappe.db.get_value(
-                        "Warehouse", target_warehouse, "custom_cost_center"
+                        "Warehouse", row.t_warehouse, "custom_cost_center"
                     )
                     frappe.db.sql(
                     f""" 
                         UPDATE `tabStock Ledger Entry`
-                        SET custom_new = {row.custom_new}, custom_used = {row.custom_used}, custom_target_service_area='{row.to_service_area}', custom_target_subservice_area='{row.to_subservice_area}', custom_target_product='{row.to_product}', custom_target_project='{row.custom_target_project}', inventory_flag='{row.inventory_flag}', inventory_scenario='{row.inventory_scenario}', custom_cost_center='{target_cost_center}', custom_department='{self.custom_department}'
-                        WHERE docstatus=1 
+                        SET 
+                            custom_new = {row.custom_new}, 
+                            custom_used = {row.custom_used}, 
+                            custom_target_service_area='{row.to_service_area}', 
+                            custom_target_subservice_area='{row.to_subservice_area}', 
+                            custom_target_product='{row.to_product}', 
+                            custom_target_project='{row.custom_target_project}', 
+                            inventory_flag='{row.inventory_flag}', 
+                            inventory_scenario='{row.inventory_scenario}', 
+                            custom_cost_center='{target_cost_center}', 
+                            custom_department='{self.custom_department}'
+                        WHERE 
+                            docstatus=1 
                             and voucher_detail_no = '{row.name}'
                             and voucher_no = '{self.name}'
                             and warehouse= '{row.t_warehouse}'
                     """)
-                
-
-        if self.custom_donor_ids:
+        
+        self.update_donor_ids_and_names()
+            
+    def update_donor_ids_and_names(self):
+        if (self.custom_donor_ids):
             # Initialize an empty list to store child values
-            child_values = []
+            donor_ids = []
             donor_names = []
-
-            # Fetch child table records for the current parent document
-            child_records = frappe.get_all(
-                "Donor List",
-                filters={"parent": self.name},
-                fields=["donor"],
-            )
-
             # Loop through each child record and process the values
-            for child in child_records:
-                child_values.append(child.donor)
-                donor=frappe.db.get_value('Donor',child.donor,'donor_name')
-                donor_names.append(donor)
-
-            if frappe.db.exists(
-                "Stock Ledger Entry",
-                {
-                    "docstatus": 1,
-                    "voucher_no": self.name,
-                },
-            ):
-                child_values_as_string = json.dumps(child_values)
+            for row in self.custom_donor_ids:
+                donor_ids.append(row.donor)
+                donor_names.append(row.donor_name)
+            
+            if frappe.db.exists("Stock Ledger Entry",{"docstatus": 1,"voucher_no": self.name,}):
+                donor_ids_as_string = json.dumps(donor_ids)
                 frappe.db.sql(
                     f""" 
                             update 
                                 `tabStock Ledger Entry`
                             set 
-                                custom_donor_list = '{child_values_as_string}'
+                                custom_donor_list = '{donor_ids_as_string}'
                             where 
                                 docstatus=1 
                                 and voucher_no = '{self.name}'
-                        """
-                )
-
+                    """)
                 donor_names_as_string = json.dumps(donor_names)
                 frappe.db.sql(
                     f""" 
@@ -398,10 +358,7 @@ class XStockEntry(StockEntry):
                             where 
                                 docstatus=1 
                                 and voucher_no = '{self.name}'
-                        """
-                )
-
-                
+                    """)
 
     def on_trash(self):
         self.cancel_linked_records()
@@ -448,80 +405,37 @@ class XStockEntry(StockEntry):
             """
             )
 
-    def validate_difference_account(self):
-        company = frappe.get_doc("Company", self.company)
-        for d in self.get("items"):
-            d.expense_account = company.custom_default_inventory_fund_account
+    
 
     # or (self.purpose == "Material Transfer" and self.outgoing_stock_entry)
     def validate_qty(self):
         super(XStockEntry, self).validate_qty()
+        
+        def get_conditions(row):
+            conditions = f" and item_code='{row.item_code}'"
+            conditions += f" and custom_new = '{row.custom_new}' " if (row.custom_new) else " and custom_new = 0 "
+            conditions += f" and custom_used = '{row.custom_used}' " if (row.custom_used) else " and custom_used = 0 "
+            conditions += f" and warehouse = '{row.s_warehouse}' " if (row.s_warehouse) else " and warehouse IS NULL "
+            conditions += f" and custom_cost_center = '{row.cost_center}' " if (row.cost_center) else " and custom_cost_center IS NULL "
+            conditions += f" and inventory_flag = '{row.inventory_flag}' " if (row.inventory_flag) else " and inventory_flag = 'Normal' "
+            conditions += f" and inventory_scenario = '{row.inventory_scenario}' " if (row.inventory_scenario) else " and inventory_scenario = 'Normal' "
+            conditions += f" and service_area = '{row.service_area}' " if (row.service_area) else " and service_area IS NULL "
+            conditions += f" and subservice_area = '{row.subservice_area}' " if (row.subservice_area) else " and subservice_area IS NULL "
+            conditions += f" and product = '{row.product}' " if (row.product) else " and product IS NULL "
+            conditions += f" and project = '{row.project}' " if (row.project) else " and project IS NULL "
+            return conditions
+        
         if ((self.purpose == "Material Issue") or (self.purpose == "Material Transfer")):
-            for item in self.items:
-                condition_parts = [
-                    (
-                        f" and custom_new = {item.custom_new} "
-                        if item.custom_new
-                        else " and custom_new = 0 "
-                    ),
-                    (
-                        f" and custom_used = {item.custom_used} "
-                        if item.custom_used
-                        else " and custom_used = 0 "
-                    ),
-                    (
-                        f" and warehouse = '{item.s_warehouse}' "
-                        if item.s_warehouse
-                        else " and warehouse IS NULL "
-                    ),
-                    (
-                        f" and custom_cost_center = '{item.cost_center}' "
-                        if item.cost_center
-                        else " and custom_cost_center IS NULL "
-                    ),
-                    (
-                        f" and inventory_flag = '{item.inventory_flag}' "
-                        if item.inventory_flag
-                        else "Normal"
-                    ),
-                    (
-                        f" and inventory_scenario = '{item.inventory_scenario}' "
-                        if item.inventory_scenario
-                        else "Normal"
-                    ),
-                    (
-                        f" and service_area = '{item.service_area}' "
-                        if item.service_area
-                        else " and service_area IS NULL "
-                    ),
-                    (
-                        f" and subservice_area = '{item.subservice_area}' "
-                        if item.subservice_area
-                        else " and subservice_area IS NULL "
-                    ),
-                    (
-                        f" and product = '{item.product}' "
-                        if item.product
-                        else " and product IS NULL "
-                    ),
-                    (
-                        f" and project = '{item.project}' "
-                        if item.project
-                        else " and project IS NULL "
-                    ),
-                ]
-                condition = "  ".join(condition_parts)
-
+            for row in self.items:
+                conditions = get_conditions(row)
                 query = f"""
-                        SELECT ifnull(SUM(actual_qty),0) as donated_qty,
-                            item_code
-                        FROM `tabStock Ledger Entry`
+                        SELECT 
+                            ifnull(SUM(actual_qty),0) as donated_qty, item_code
+                        FROM 
+                            `tabStock Ledger Entry`
                         WHERE
-                            item_code='{item.item_code}'
-                            {f'{condition}' if condition else ''}
+                            docstatus=1 {conditions}
                     """
-                # frappe.throw(f"query: {query}")
-                
                 try:
                     donated_invetory = frappe.db.sql(
                         query,
@@ -531,373 +445,13 @@ class XStockEntry(StockEntry):
                     frappe.throw(f"Error executing query: {e}")
 
                 for di in donated_invetory:
-                    if di.donated_qty >= item.qty:
+                    if di.donated_qty >= row.qty:
                         pass
                     else:
                         frappe.throw(
-					f"Insufficient quantity for item {item.item_code}. "
-					f"Requested quantity: {item.qty}, Available quantity: {di.donated_qty}"
-					)
-
-    def create_gl_entries_for_stock_entry(self):
-        debit_account, credit_account = "", ""
-
-        company = frappe.get_doc("Company", self.company)
-        if self.stock_entry_type == "Donated Inventory Receive - Restricted":
-            pass
-
-        elif self.stock_entry_type == "Inventory Consumption - Restricted":
-            for item in self.items:
-                if item.custom_source_warehouse_tpt == "For Third Party":
-                    pass
-                else:
-                    debit_account = company.custom_default_inventory_expense_account
-                    credit_account = company.default_income_account
-
-                    if not debit_account or not credit_account:
-                        frappe.throw("Required accounts not found in the company")
-
-                    # Create the GL entry for the debit account and update
-                    debit_entry = self.get_gl_entry_dict()
-                    debit_entry.update(
-                        {
-                            "account": debit_account,
-                            "debit": self.total_outgoing_value,
-                            "credit": 0,
-                            "debit_in_account_currency": self.total_outgoing_value,
-                            "credit_in_account_currency": 0,
-                        }
-                    )
-                    debit_gl = frappe.get_doc(debit_entry)
-                    debit_gl.flags.ignore_permissions = True
-                    debit_gl.insert()
-                    debit_gl.submit()
-
-                    credit_entry = self.get_gl_entry_dict()
-                    credit_entry.update(
-                        {
-                            "account": credit_account,
-                            "debit": 0,
-                            "credit": self.total_outgoing_value,
-                            "debit_in_account_currency": 0,
-                            "credit_in_account_currency": self.total_outgoing_value,
-                        }
-                    )
-                    credit_gl = frappe.get_doc(credit_entry)
-                    credit_gl.flags.ignore_permissions = True
-                    credit_gl.insert()
-                    credit_gl.submit()
-
-        elif self.stock_entry_type == "Inventory Transfer - Restricted":
-
-            source_cost_center, target_cost_center = "", ""
-            for item in self.items:
-                source_warehouse = item.s_warehouse
-                source_cost_center = frappe.db.get_value(
-                    "Warehouse", source_warehouse, "custom_cost_center"
-                )
-
-                target_warehouse = item.t_warehouse
-                target_cost_center = frappe.db.get_value(
-                    "Warehouse", target_warehouse, "custom_cost_center"
-                )
-
-            debit_account = company.default_inventory_account
-            credit_account = company.custom_default_inventory_fund_account
-
-            if not debit_account or not credit_account:
-                frappe.throw("Required accounts not found in the company")
-
-            for item in self.items:
-                # cost_center = item.cost_center
-                service_area = item.to_service_area
-                subservice_area = item.to_subservice_area
-                product = item.to_product
-                project = item.custom_target_project
-            # Create the GL entry for the debit account and update
-            debit_entry = self.get_gl_entry_dict()
-            debit_entry.update(
-                {
-                    "account": debit_account,
-                    "debit": self.total_incoming_value,
-                    "cost_center": target_cost_center,
-                    "credit": 0,
-                    "debit_in_account_currency": self.total_incoming_value,
-                    "credit_in_account_currency": 0,
-                    "service_area": service_area,
-                    "subservice_area": subservice_area,
-                    "product": product,
-                    "project": project,
-
-                }
-            )
-            debit_gl = frappe.get_doc(debit_entry)
-            debit_gl.flags.ignore_permissions = True
-            debit_gl.insert()
-            debit_gl.submit()
-
-            credit_entry = self.get_gl_entry_dict()
-            credit_entry.update(
-                {
-                    "account": credit_account,
-                    "debit": 0,
-                    "cost_center": target_cost_center,
-                    "credit": self.total_incoming_value,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": self.total_incoming_value,
-                    "service_area": service_area,
-                    "subservice_area": subservice_area,
-                    "product": product,
-                    "project": project,
-                }
-            )
-            credit_gl = frappe.get_doc(credit_entry)
-            credit_gl.flags.ignore_permissions = True
-            credit_gl.insert()
-            credit_gl.submit()
-
-            debit_account = company.custom_default_inventory_fund_account
-            credit_account = company.default_inventory_account
-
-            if not debit_account or not credit_account:
-                frappe.throw("Required accounts not found in the company")
-            # Create the GL entry for the debit account and update
-            debit_entry = self.get_gl_entry_dict()
-            debit_entry.update(
-                {
-                    "account": debit_account,
-                    "debit": self.total_incoming_value,
-                    "cost_center": source_cost_center,
-                    "credit": 0,
-                    "debit_in_account_currency": self.total_incoming_value,
-                    "credit_in_account_currency": 0,
-                }
-            )
-            debit_gl = frappe.get_doc(debit_entry)
-            debit_gl.flags.ignore_permissions = True
-            debit_gl.insert()
-            debit_gl.submit()
-
-            credit_entry = self.get_gl_entry_dict()
-            credit_entry.update(
-                {
-                    "account": credit_account,
-                    "debit": 0,
-                    "cost_center": source_cost_center,
-                    "credit": self.total_incoming_value,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": self.total_incoming_value,
-                }
-            )
-            credit_gl = frappe.get_doc(credit_entry)
-            credit_gl.flags.ignore_permissions = True
-            credit_gl.insert()
-            credit_gl.submit()
-        
-        elif self.stock_entry_type == "Donated Inventory Disposal - Restricted":
-            pass
-
-        elif self.purpose == "Material Transfer" and self.add_to_transit:
-            debit_account = company.custom_default_stock_in_transit
-            credit_account = company.custom_default_stock_transfered_control
-
-            source_cost_center, target_cost_center = "", ""
-            for item in self.items:
-                source_warehouse = item.s_warehouse
-                source_cost_center = frappe.db.get_value(
-                    "Warehouse", source_warehouse, "custom_cost_center"
-                )
-
-                target_warehouse = item.t_warehouse
-                target_cost_center = frappe.db.get_value(
-                    "Warehouse", target_warehouse, "custom_cost_center"
-                )
-
-            if not debit_account or not credit_account:
-                frappe.throw("Required accounts not found in the company")
-            # Create the GL entry for the debit account and update
-            debit_entry = self.get_gl_entry_dict()
-            debit_entry.update(
-                {
-                    "account": debit_account,
-                    "debit": self.total_incoming_value,
-                    "cost_center": source_cost_center,
-                    "credit": 0,
-                    "debit_in_account_currency": self.total_incoming_value,
-                    "credit_in_account_currency": 0,
-                }
-            )
-            debit_gl = frappe.get_doc(debit_entry)
-            debit_gl.flags.ignore_permissions = True
-            debit_gl.insert()
-            debit_gl.submit()
-
-            credit_entry = self.get_gl_entry_dict()
-            credit_entry.update(
-                {
-                    "account": credit_account,
-                    "debit": 0,
-                    "cost_center": target_cost_center,
-                    "credit": self.total_incoming_value,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": self.total_incoming_value,
-                }
-            )
-            credit_gl = frappe.get_doc(credit_entry)
-            credit_gl.flags.ignore_permissions = True
-            credit_gl.insert()
-            credit_gl.submit()
-
-            debit_account = company.custom_default_inventory_fund_account
-            credit_account = company.default_inventory_account
-
-            if not debit_account or not credit_account:
-                frappe.throw("Required accounts not found in the company")
-            # Create the GL entry for the debit account and update
-            debit_entry = self.get_gl_entry_dict()
-            debit_entry.update(
-                {
-                    "account": debit_account,
-                    "debit": self.total_incoming_value,
-                    "cost_center": source_cost_center,
-                    "credit": 0,
-                    "debit_in_account_currency": self.total_incoming_value,
-                    "credit_in_account_currency": 0,
-                }
-            )
-            debit_gl = frappe.get_doc(debit_entry)
-            debit_gl.flags.ignore_permissions = True
-            debit_gl.insert()
-            debit_gl.submit()
-
-            credit_entry = self.get_gl_entry_dict()
-            credit_entry.update(
-                {
-                    "account": credit_account,
-                    "debit": 0,
-                    "cost_center": target_cost_center,
-                    "credit": self.total_incoming_value,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": self.total_incoming_value,
-                }
-            )
-            credit_gl = frappe.get_doc(credit_entry)
-            credit_gl.flags.ignore_permissions = True
-            credit_gl.insert()
-            credit_gl.submit()
-            
-
-        elif self.purpose == "Material Transfer" and self.outgoing_stock_entry:
-            debit_account = company.default_inventory_account
-            credit_account = company.custom_default_inventory_fund_account
-
-            source_cost_center, target_cost_center = "", ""
-            for item in self.items:
-                source_warehouse = item.s_warehouse
-                source_cost_center = frappe.db.get_value(
-                    "Warehouse", source_warehouse, "custom_cost_center"
-                )
-
-                target_warehouse = item.t_warehouse
-                target_cost_center = frappe.db.get_value(
-                    "Warehouse", target_warehouse, "custom_cost_center"
-                )
-
-            if not debit_account or not credit_account:
-                frappe.throw("Required accounts not found in the company")
-            # Create the GL entry for the debit account and update
-            debit_entry = self.get_gl_entry_dict()
-            debit_entry.update(
-                {
-                    "account": debit_account,
-                    "debit": self.total_incoming_value,
-                    "cost_center": source_cost_center,
-                    "credit": 0,
-                    "debit_in_account_currency": self.total_incoming_value,
-                    "credit_in_account_currency": 0,
-                }
-            )
-            debit_gl = frappe.get_doc(debit_entry)
-            debit_gl.flags.ignore_permissions = True
-            debit_gl.insert()
-            debit_gl.submit()
-
-            credit_entry = self.get_gl_entry_dict()
-            credit_entry.update(
-                {
-                    "account": credit_account,
-                    "debit": 0,
-                    "cost_center": target_cost_center,
-                    "credit": self.total_incoming_value,
-                    "debit_in_account_currency": 0,
-                    "credit_in_account_currency": self.total_incoming_value,
-                }
-            )
-            credit_gl = frappe.get_doc(credit_entry)
-            credit_gl.flags.ignore_permissions = True
-            credit_gl.insert()
-            credit_gl.submit()
-
-    def get_gl_entry_dict(self):
-        cost_center = ""
-        service_area = ""
-        subservice_area = ""
-        product = ""
-        project = ""
-
-        for item in self.items:
-            cost_center = item.cost_center
-            service_area = item.service_area
-            subservice_area = item.subservice_area
-            product = item.product
-            project = item.project
-
-        return frappe._dict(
-            {
-                "doctype": "GL Entry",
-                "posting_date": self.posting_date,
-                # "transaction_date": self.posting_date,
-                "party_type": "Donor",
-                "party": self.donor,
-                "against": f"Stock Entry: {self.name}",
-                "against_voucher_type": "Stock Entry",
-                "against_voucher": self.name,
-                "voucher_type": "Stock Entry",
-                "voucher_subtype": self.stock_entry_type,
-                "voucher_no": self.name,
-                "company": self.company,
-                "cost_center": cost_center,
-                "service_area": service_area,
-                "subservice_area": subservice_area,
-                "product": product,
-                "project": project,
-            }
-        )
-    
-    def set_total_quantity_count(self):
-            self.custom_total_quantity_count = sum([item.qty for item in self.get("items")])
-
-    def set_warehouse_cost_centers(self):
-        for item in self.items:
-            source_cost_center, target_cost_center = "", ""
-            self.project = item.project
-            if self.purpose == "Material Receipt":
-                target_warehouse = item.t_warehouse
-                target_cost_center = frappe.db.get_value(
-                    "Warehouse", target_warehouse, "custom_cost_center"
-                )
-                item.cost_center = target_cost_center
-            elif self.purpose == "Material Issue" or self.purpose == "Material Transfer":
-                source_warehouse = item.s_warehouse
-                source_cost_center = frappe.db.get_value(
-                    "Warehouse", source_warehouse, "custom_cost_center"
-                )
-                item.cost_center = source_cost_center
-
-    # # Check for over quantity
-    # def over_quantity_validation():
-    #     if target_doc.qty > (source_doc.qty - source_doc.transferred_qty):
-    #         frappe.throw("Errorrrrr")
+					f"Insufficient qty for item <b>{row.item_code}</b>, "
+					f"requested qty: <b>{row.qty}</b>, available qty: <b>{di.donated_qty}</b>"
+					,title="Insufficient Qty")
 
 @frappe.whitelist()
 def make_stock_in_lost_entry(source_name, target_doc=None):

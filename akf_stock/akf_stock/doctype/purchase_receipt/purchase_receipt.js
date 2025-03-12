@@ -65,6 +65,10 @@ frappe.ui.form.on("Purchase Receipt", {
 	},
 
 	refresh_: function(frm) {
+		// Nabeel Saleem
+		if(frm.is_new()){
+			frm.set_value("program_details", []);
+		}
 		if(frm.doc.company) {
 			frm.trigger("toggle_display_account_head");
 		}
