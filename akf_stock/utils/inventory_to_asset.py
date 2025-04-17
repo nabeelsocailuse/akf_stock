@@ -21,7 +21,6 @@ def create_asset_item_and_asset(self):
 		if (frappe.db.exists("Item", {"item_name":f"Asset-{row.item_name}"})):
 			return frappe.db.get_value("Item", {"item_name":f"Asset-{row.item_name}"}, "name")
 		else:
-			frappe.throw(f"else {row.item_name}")
 			doc = frappe.get_doc({
 				"doctype": "Item",
 				"item_code": f"Asset-{row.item_name}",
@@ -47,7 +46,16 @@ def create_asset_item_and_asset(self):
 			"gross_purchase_amount": row.basic_rate,
 			"asset_quantity": row.qty,
 			"is_existing_asset": 1,
-			"custom_against_stock_entry": self.name
+			"custom_against_stock_entry": self.name,
+			"cost_center": row.cost_center,
+			"service_area": row.service_area,
+			"subservice_area": row.subservice_area,
+			"product": row.product,
+			"project": row.project,
+			"donor": row.donor,
+			"task": row.task,
+			"inventory_flag": row.inventory_flag,
+			"inventory_scenario":row.inventory_scenario
 		})
 		doc.insert(ignore_permissions=True)
 	assets_list = []

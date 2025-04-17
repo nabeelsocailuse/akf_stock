@@ -8,6 +8,14 @@ from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 
 from erpnext.assets.doctype.asset_activity.asset_activity import add_asset_activity
+from akf_accounts.utils.asset_gle_entry.asset_movement import (
+    make_asset_movement_gl_entries,
+    delete_all_gl_entries
+)
+
+from akf_accounts.utils.asset_gle_entry.inter_fund_transfer import (
+    make_asset_inter_fund_transfer_gl_entries
+)
 
 
 class AssetMovement(Document):
@@ -51,7 +59,7 @@ class AssetMovement(Document):
 		for d in self.assets:
 			if self.purpose in ["Transfer", "Issue"]:
 				current_location = frappe.db.get_value("Asset", d.asset, "location")
-				if d.source_location:
+				if d.source_location and (not d.in_transit_location): # Nabeel Saleem, 18-03-2025
 					if current_location != d.source_location:
 						frappe.throw(
 							_("Asset {0} does not belongs to the location {1}").format(d.asset, d.source_location)
@@ -117,9 +125,12 @@ class AssetMovement(Document):
 
 	def on_submit(self):
 		self.set_latest_location_and_custodian_in_asset()
+		make_asset_movement_gl_entries(self)
+		make_asset_inter_fund_transfer_gl_entries(self)
 
 	def on_cancel(self):
 		self.set_latest_location_and_custodian_in_asset()
+		delete_all_gl_entries(self)
 
 	def set_latest_location_and_custodian_in_asset(self):
 		current_location, current_employee = "", ""

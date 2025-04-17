@@ -10,13 +10,25 @@
   "purpose",
   "column_break_4",
   "transaction_date",
+  "add_to_transit",
   "section_break_10",
   "assets",
   "reference",
   "reference_doctype",
   "column_break_9",
   "reference_name",
-  "amended_from"
+  "amended_from",
+  "accounts_tab",
+  "enable_asset_accounting",
+  "section_break_hmom",
+  "default_asset_account",
+  "default_designated_asset_fund_account",
+  "column_break_spxr",
+  "asset_in_transit_account",
+  "designated_asset_in_transit_fund",
+  "column_break_pcap",
+  "default_asset_nbv_account",
+  "accumulated_depreciation_account"
  ],
  "fields": [
   {
@@ -33,7 +45,7 @@
    "fieldname": "purpose",
    "fieldtype": "Select",
    "label": "Purpose",
-   "options": "\nIssue\nReceipt\nTransfer\nInter-Branch",
+   "options": "\nIssue\nReceipt\nTransfer\nInter-Branch\nInter Fund Transfer",
    "reqd": 1
   },
   {
@@ -91,12 +103,100 @@
   {
    "fieldname": "column_break_9",
    "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "enable_asset_accounting",
+   "fieldname": "accounts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Accounts"
+  },
+  {
+   "fetch_from": "company.custom_default_asset_account",
+   "fetch_if_empty": 1,
+   "fieldname": "default_asset_account",
+   "fieldtype": "Link",
+   "label": "Default Asset Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "company.custom_default_designated_asset_fund_account",
+   "fetch_if_empty": 1,
+   "fieldname": "default_designated_asset_fund_account",
+   "fieldtype": "Link",
+   "label": "Default Designated Asset Fund Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_spxr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pcap",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "company.custom_default_asset_nbv_account",
+   "fetch_if_empty": 1,
+   "fieldname": "default_asset_nbv_account",
+   "fieldtype": "Link",
+   "label": "Default Asset NBV Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "company.accumulated_depreciation_account",
+   "fetch_if_empty": 1,
+   "fieldname": "accumulated_depreciation_account",
+   "fieldtype": "Link",
+   "label": "Accumulated Depreciation Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_hmom",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fetch_from": "company.custom_enable_asset_accounting",
+   "fetch_if_empty": 1,
+   "fieldname": "enable_asset_accounting",
+   "fieldtype": "Check",
+   "label": "Enable Asset Accounting",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "add_to_transit",
+   "fieldtype": "Check",
+   "label": "Add To Transit",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "company.custom_asset_in_transit",
+   "fetch_if_empty": 1,
+   "fieldname": "asset_in_transit_account",
+   "fieldtype": "Link",
+   "label": "Asset In Transit Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "company.custom_designated_asset_in_transit_fund",
+   "fetch_if_empty": 1,
+   "fieldname": "designated_asset_in_transit_fund",
+   "fieldtype": "Link",
+   "label": "Designated Asset In Transit Fund",
+   "options": "Account",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-25 12:07:57.894332",
+ "modified": "2025-03-26 13:19:14.490004",
  "modified_by": "Administrator",
  "module": "AKF Stock",
  "name": "Asset Movement",

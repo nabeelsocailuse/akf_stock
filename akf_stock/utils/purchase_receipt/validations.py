@@ -4,6 +4,7 @@ from erpnext.accounts.utils import get_company_default
 
 def validate_donor_balance(self):
 	if(self.is_new()): return
+	if(self.custom_type_of_transaction=="Normal"): return
 	if(not get_company_default(self.company, "custom_enable_accounting_dimensions_dialog", ignore_validation=True)): 
 		self.set("program_details", [])
 		return

@@ -7,14 +7,38 @@
  "field_order": [
   "company",
   "asset",
-  "source_location",
-  "source_cost_center",
-  "from_employee",
-  "column_break_2",
   "asset_name",
+  "total_asset_cost",
+  "asset_worth",
+  "total_accumulated_depreciation",
+  "column_break_2",
+  "source_location",
+  "in_transit_location",
   "target_location",
+  "from_employee",
+  "to_employee",
+  "column_break_pnfs",
+  "source_cost_center",
+  "in_transit_cost_center",
   "target_cost_center",
-  "to_employee"
+  "accounting_dimensons_section",
+  "service_area",
+  "subservice_area",
+  "product",
+  "project",
+  "donor",
+  "task",
+  "column_break_ervi",
+  "inventory_flag",
+  "inventory_scenario",
+  "inter_fund_transfer_section",
+  "target_service_area",
+  "column_break_zuks",
+  "target_subservice_area",
+  "column_break_orzf",
+  "target_product",
+  "column_break_nhsy",
+  "target_project"
  ],
  "fields": [
   {
@@ -75,6 +99,8 @@
    "read_only": 1
   },
   {
+   "fetch_from": "asset.cost_center",
+   "fetch_if_empty": 1,
    "fieldname": "source_cost_center",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -87,11 +113,171 @@
    "in_list_view": 1,
    "label": "Target Cost Center",
    "options": "Cost Center"
+  },
+  {
+   "default": "0",
+   "fetch_from": "asset.total_asset_cost",
+   "fetch_if_empty": 1,
+   "fieldname": "total_asset_cost",
+   "fieldtype": "Currency",
+   "label": "Total Asset Cost",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "asset.custom_asset_worth",
+   "fetch_if_empty": 1,
+   "fieldname": "asset_worth",
+   "fieldtype": "Currency",
+   "label": "Asset Worth",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "asset.custom_total_accumulated_depreciation",
+   "fetch_if_empty": 1,
+   "fieldname": "total_accumulated_depreciation",
+   "fieldtype": "Currency",
+   "label": "Total Accumulated Depreciation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pnfs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "in_transit_cost_center",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "In Transit Cost Center",
+   "options": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "in_transit_location",
+   "fieldtype": "Link",
+   "label": "In Transit Location",
+   "options": "Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accounting_dimensons_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensons"
+  },
+  {
+   "fetch_from": "asset.service_area",
+   "fieldname": "service_area",
+   "fieldtype": "Link",
+   "label": "Service Area",
+   "options": "Service Area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ervi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "asset.subservice_area",
+   "fieldname": "subservice_area",
+   "fieldtype": "Link",
+   "label": "Subservice Area",
+   "options": "Subservice Area",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "asset.product",
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "label": "Product",
+   "options": "Product",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "asset.project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "asset.donor",
+   "fieldname": "donor",
+   "fieldtype": "Link",
+   "label": "Donor",
+   "options": "Donor",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "asset.task",
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Task",
+   "options": "Task",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "asset.inventory_flag",
+   "fieldname": "inventory_flag",
+   "fieldtype": "Link",
+   "label": "Inventory Flag",
+   "options": "Inventory Flag",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "asset.inventory_scenario",
+   "fieldname": "inventory_scenario",
+   "fieldtype": "Link",
+   "label": "Inventory Scenario",
+   "options": "Inventory Scenario",
+   "read_only": 1
+  },
+  {
+   "fieldname": "inter_fund_transfer_section",
+   "fieldtype": "Section Break",
+   "label": "Inter Fund Transfer"
+  },
+  {
+   "fieldname": "target_project",
+   "fieldtype": "Link",
+   "label": "Target Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "column_break_orzf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "target_service_area",
+   "fieldtype": "Link",
+   "label": "Target Service Area",
+   "options": "Service Area"
+  },
+  {
+   "fieldname": "column_break_zuks",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "target_subservice_area",
+   "fieldtype": "Link",
+   "label": "Target Subservice Area",
+   "options": "Subservice Area"
+  },
+  {
+   "fieldname": "target_product",
+   "fieldtype": "Link",
+   "label": "Target Product",
+   "options": "Product"
+  },
+  {
+   "fieldname": "column_break_nhsy",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-02-25 12:09:31.931330",
+ "modified": "2025-03-28 12:58:46.551706",
  "modified_by": "Administrator",
  "module": "AKF Stock",
  "name": "Asset Movement Item",

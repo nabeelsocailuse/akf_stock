@@ -12,6 +12,25 @@ frappe.ui.form.on("Stock Entry", {
           })
         });
       }
+      if (frm.doc.add_to_transit && frm.doc.purpose=='Material Transfer' && frm.doc.per_transferred < 100) {
+				frm.add_custom_button(__('End Transit'), function() {
+					frappe.model.open_mapped_doc({
+						method: "erpnext.stock.doctype.stock_entry.stock_entry.make_stock_in_entry",
+						frm: frm
+					})
+				});
+			}
+
+			if (frm.doc.per_transferred > 0) {
+				frm.add_custom_button(__('Received Stock Entries'), function() {
+					frappe.route_options = {
+						'outgoing_stock_entry': frm.doc.name,
+						'docstatus': ['!=', 2]
+					};
+
+					frappe.set_route('List', 'Stock Entry');
+				}, __("View"));
+			}
     }
   },
   // Below code is added by Mubashir Bashir

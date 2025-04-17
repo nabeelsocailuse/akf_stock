@@ -44,7 +44,9 @@ frappe.ui.form.on('Asset Movement', {
 	onload: (frm) => {
 		frm.trigger('set_required_fields');
 	},
-
+	refresh: (frm) =>{
+		frm.trigger("end_transit");
+	},
 	purpose: (frm) => {
 		frm.trigger('set_required_fields');
 	},
@@ -84,6 +86,16 @@ frappe.ui.form.on('Asset Movement', {
 				});
 			});
 			frm.refresh_field('assets');
+		}
+	},
+	end_transit: (frm)=> {
+		if (frm.doc.docstatus==1 && frm.doc.add_to_transit && frm.doc.purpose=='Transfer') {
+			frm.add_custom_button(__('End Transit'), function() {
+				frappe.model.open_mapped_doc({
+				method: "akf_accounts.utils.asset_gle_entry.asset_movement.make_asset_movement_end_transit_entry",
+					frm: frm
+				})
+			});
 		}
 	}
 });
