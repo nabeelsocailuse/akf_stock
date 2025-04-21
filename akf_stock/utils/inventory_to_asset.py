@@ -62,7 +62,7 @@ def create_asset_item_and_asset(self):
 	for row in self.items:
 		asset_category = create_asset_category(row)
 		item_code = create_asset_item(row, asset_category)
-		for asset_qty in range(row.qty):  
+		for asset_qty in range(int(row.qty)):  
 			create_asset(row, item_code)
 		assets_list.append(item_code)
 	if (assets_list):
