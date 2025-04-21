@@ -44,7 +44,7 @@ def create_asset_item_and_asset(self):
 			"custom_source_of_asset_acquistion": 'Normal',
 			"available_for_use_date": frappe.utils.nowdate(),
 			"gross_purchase_amount": row.basic_rate,
-			"asset_quantity": row.qty,
+			"asset_quantity": 1,
 			"is_existing_asset": 1,
 			"custom_against_stock_entry": self.name,
 			"cost_center": row.cost_center,
@@ -61,8 +61,9 @@ def create_asset_item_and_asset(self):
 	assets_list = []
 	for row in self.items:
 		asset_category = create_asset_category(row)
-		item_code = create_asset_item(row, asset_category)  
-		create_asset(row, item_code)
+		item_code = create_asset_item(row, asset_category)
+		for asset_qty in range(row.qty):  
+			create_asset(row, item_code)
 		assets_list.append(item_code)
 	if (assets_list):
 		frappe.msgprint(f"Assets are created for items: {', '.join(assets_list)}")
