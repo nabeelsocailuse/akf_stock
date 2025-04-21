@@ -30,8 +30,8 @@ def create_asset_item_and_asset(self):
 				"is_stock_item": 0,
 				"is_fixed_asset": 1,
 				"asset_category": asset_category,
-				"custom_source_of_asset_acquistion": row.inventory_flag,
-				"custom_type_of_asset": row.inventory_scenario
+				"custom_source_of_asset_acquistion": f'{row.inventory_flag}',
+				"custom_type_of_asset": f'{row.inventory_scenario}'
 			})
 			doc.insert(ignore_permissions=True)
 			return doc.name
@@ -41,7 +41,8 @@ def create_asset_item_and_asset(self):
 			"item_code": item_code,
 			"company": self.company,
 			"location": row.custom_asset_location,
-			"custom_source_of_asset_acquistion": 'Normal',
+			"custom_source_of_asset_acquistion": f'{row.inventory_flag}',
+			"custom_type_of_asset": f'{row.inventory_scenario}',
 			"available_for_use_date": frappe.utils.nowdate(),
 			"gross_purchase_amount": row.basic_rate,
 			"asset_quantity": 1,
