@@ -66,7 +66,7 @@ frappe.ui.form.on("Purchase Receipt", {
 
 	refresh_: function(frm) {
 		// Nabeel Saleem
-		if(frm.is_new()){
+		if(frm.is_new() && !frm.doc.custom_encumbrance){
 			frm.set_value("program_details", []);
 		}
 		if(frm.doc.company) {
@@ -436,7 +436,7 @@ var validate_sample_quantity = function(frm, cdt, cdn) {
 };
 
 function set_query_donor(frm){
-    frm.fields_dict['custom_program_details'].grid.get_field('pd_donor').get_query = function(doc, cdt, cdn) {
+    frm.fields_dict['program_details'].grid.get_field('pd_donor').get_query = function(doc, cdt, cdn) {
         var row = locals[cdt][cdn];
         return {
             filters: {
