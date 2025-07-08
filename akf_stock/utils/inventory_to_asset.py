@@ -67,6 +67,6 @@ def create_asset_item_and_asset(self):
 			create_asset(row, item_code)
 		assets_list.append(item_code)
 	if (assets_list):
-		frappe.msgprint(f"Assets are created for items: {', '.join(assets_list)}")
+		frappe.msgprint(f"Assets are created for items: {', '.join(assets_list)}", alert=1)
 	else:
 		frappe.throw("No new assets created.", title=f"{self.stock_entry_type}")

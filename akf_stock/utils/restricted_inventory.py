@@ -70,7 +70,7 @@ def create_restricted_inventory_gl_entries(self):
 			)
 
 		debit_account = company.default_inventory_account
-		credit_account = company.custom_default_inventory_fund_account
+		# credit_account = company.custom_default_inventory_fund_account
 
 		if not debit_account or not credit_account:
 			frappe.throw("Required accounts not found in the company")
@@ -103,47 +103,47 @@ def create_restricted_inventory_gl_entries(self):
 		debit_gl.insert()
 		debit_gl.submit()
 
-		credit_entry = get_gl_entry_dict(self)
-		credit_entry.update(
-			{
-				"account": credit_account,
-				"debit": 0,
-				"cost_center": target_cost_center,
-				"credit": self.total_incoming_value,
-				"debit_in_account_currency": 0,
-				"credit_in_account_currency": self.total_incoming_value,
-				"service_area": service_area,
-				"subservice_area": subservice_area,
-				"product": product,
-				"project": project,
-			}
-		)
-		credit_gl = frappe.get_doc(credit_entry)
-		credit_gl.flags.ignore_permissions = True
-		credit_gl.insert()
-		credit_gl.submit()
+		# credit_entry = get_gl_entry_dict(self)
+		# credit_entry.update(
+		# 	{
+		# 		"account": credit_account,
+		# 		"debit": 0,
+		# 		"cost_center": target_cost_center,
+		# 		"credit": self.total_incoming_value,
+		# 		"debit_in_account_currency": 0,
+		# 		"credit_in_account_currency": self.total_incoming_value,
+		# 		"service_area": service_area,
+		# 		"subservice_area": subservice_area,
+		# 		"product": product,
+		# 		"project": project,
+		# 	}
+		# )
+		# credit_gl = frappe.get_doc(credit_entry)
+		# credit_gl.flags.ignore_permissions = True
+		# credit_gl.insert()
+		# credit_gl.submit()
 
-		debit_account = company.custom_default_inventory_fund_account
+		# debit_account = company.custom_default_inventory_fund_account
 		credit_account = company.default_inventory_account
 
 		if not debit_account or not credit_account:
 			frappe.throw("Required accounts not found in the company")
 		# Create the GL entry for the debit account and update
-		debit_entry = get_gl_entry_dict(self)
-		debit_entry.update(
-			{
-				"account": debit_account,
-				"debit": self.total_incoming_value,
-				"cost_center": source_cost_center,
-				"credit": 0,
-				"debit_in_account_currency": self.total_incoming_value,
-				"credit_in_account_currency": 0,
-			}
-		)
-		debit_gl = frappe.get_doc(debit_entry)
-		debit_gl.flags.ignore_permissions = True
-		debit_gl.insert()
-		debit_gl.submit()
+		# debit_entry = get_gl_entry_dict(self)
+		# debit_entry.update(
+		# 	{
+		# 		"account": debit_account,
+		# 		"debit": self.total_incoming_value,
+		# 		"cost_center": source_cost_center,
+		# 		"credit": 0,
+		# 		"debit_in_account_currency": self.total_incoming_value,
+		# 		"credit_in_account_currency": 0,
+		# 	}
+		# )
+		# debit_gl = frappe.get_doc(debit_entry)
+		# debit_gl.flags.ignore_permissions = True
+		# debit_gl.insert()
+		# debit_gl.submit()
 
 		credit_entry = get_gl_entry_dict(self)
 		credit_entry.update(
